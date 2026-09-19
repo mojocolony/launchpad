@@ -1,48 +1,69 @@
-# Launchpad v0.2.0
+# Launchpad v0.2.2
 
 A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
-## Included in v0.2.0
+## Included in v0.2.2
 
 - Responsive bookmark groups
 - Add, edit and delete groups
+- Add bookmarks manually from the top-bar **Add** menu or from inside a group
 - Add, edit, move and delete bookmarks
 - Drag-and-drop group ordering
 - Drag-and-drop bookmark ordering and moving between groups
 - Search by group, title or URL
 - Automatic favicons
 - Light/dark mode
-- Font and font-size controls
+- Font selector: System, Bookerly, IBM Plex Mono, iA Writer Duo
+- Larger font-size range: 16–24 px
 - Browser bookmark HTML import
 - Duplicate URL protection during import
 - LocalStorage persistence
+- Visible version number
 - No npm, build process or local development environment required
+
+## What changed in v0.2.2
+
+- Increased the font-size range from 13–18 px to **16–24 px**.
+- Increased the default content size to **17 px**.
+- Group headings now scale with the selected font size.
+- Retains the v0.2.1 toolbar alignment fixes.
+- Retains the v0.2.1 **Add** menu for manually creating bookmarks or groups.
+- Retains the v0.2.1 direct import flow: clicking **Import** opens the browser file picker and imports the selected bookmark HTML file immediately.
+- Existing stored bookmarks remain under the same LocalStorage key.
 
 ## Bookmark import
 
-Enter **Edit** mode and choose **Import**. Select a standard HTML bookmark export from a browser such as Safari, Chrome, Firefox or Edge.
+Enter **Edit** mode and choose **Import**. The browser file picker opens immediately. Select a standard HTML bookmark export from Safari, Chrome, Firefox or Edge.
 
 Launchpad merges imported bookmarks with existing content. Existing URLs are skipped rather than duplicated. Browser folders become Launchpad groups. Nested folders are flattened into readable group paths such as `Research › Architecture`. Only normal `http://` and `https://` links are imported.
 
-## Run locally
+A status message appears at the bottom after the import reports how many bookmarks were imported, skipped or ignored.
 
-Open `index.html` in a browser. Most features work directly from the file, although serving the folder through a simple local web server is more reliable for browser security features.
+## Manual bookmark entry
+
+Enter **Edit** mode and choose **Add → Bookmark**. Enter a title and URL, then choose an existing group or create a new one from the same dialog.
+
+You can also use **+ Add bookmark** at the bottom of any existing group while in Edit mode.
 
 ## Deploy to GitHub Pages
 
-1. Upload `index.html`, `styles.css`, `app.js`, and this README to the existing `launchpad` repository.
-2. Replace the older files with these v0.2.0 files.
-3. Commit the changes to `main`.
-4. GitHub Pages will update from the repository root.
-
-## Next planned work
-
-- Test importing real Safari and Chrome bookmark exports
-- Add bookmark export
-- Improve touch reordering
-- Add Supabase sync after the interaction model is stable
+Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files in the `launchpad` repository with these files and commit the changes to `main`.
 
 ## Version history
+
+### v0.2.2
+
+- Increased content font-size range to 16–24 px
+- Set a larger 17 px default
+- Made group headings scale with the selected content size
+- Updated visible version number
+
+### v0.2.1
+
+- Corrected top-bar control alignment
+- Added an **Add** menu for manual bookmark/group creation
+- Changed import to a direct file-picker workflow
+- Added import status messages and a fallback parser
 
 ### v0.2.0
 
@@ -51,18 +72,14 @@ Open `index.html` in a browser. Most features work directly from the file, altho
 - Preserves nested folder names as group paths
 - Merges with existing groups when names match
 - Skips duplicate URLs
-- Reports imported, duplicate and ignored bookmark counts
-- Bumped visible version number to v0.2.0
 
 ### v0.1.2
 
 - Simplified font choices to System, Bookerly, IBM Plex Mono and iA Writer Duo
-- Loads IBM Plex Mono as a web font
-- Bookerly and iA Writer Duo use local installed copies when available
 
 ### v0.1.1
 
 - Added font selector
-- Added bookmark font-size selector
+- Added font-size selector
 - Added persistent appearance preferences
 - Added visible version number

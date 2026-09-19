@@ -45,20 +45,21 @@ const appearanceBtn = document.querySelector('#appearanceBtn');
 const appearancePanel = document.querySelector('#appearancePanel');
 const fontSelect = document.querySelector('#fontSelect');
 const fontSizeSelect = document.querySelector('#fontSizeSelect');
-const addGroupBtn = document.querySelector('#addGroupBtn');
+const addBtn = document.querySelector('#addBtn');
+const addMenu = document.querySelector('#addMenu');
+const addBookmarkBtn = document.querySelector('#addBookmarkBtn');
+const addGroupMenuBtn = document.querySelector('#addGroupMenuBtn');
 const importBtn = document.querySelector('#importBtn');
-const importDialog = document.querySelector('#importDialog');
-const importForm = document.querySelector('#importForm');
 const importFile = document.querySelector('#importFile');
-const importPreview = document.querySelector('#importPreview');
-const importResult = document.querySelector('#importResult');
-const importSubmitBtn = document.querySelector('#importSubmitBtn');
+const toast = document.querySelector('#toast');
 const bookmarkDialog = document.querySelector('#bookmarkDialog');
 const bookmarkForm = document.querySelector('#bookmarkForm');
 const bookmarkDialogTitle = document.querySelector('#bookmarkDialogTitle');
 const bookmarkTitle = document.querySelector('#bookmarkTitle');
 const bookmarkUrl = document.querySelector('#bookmarkUrl');
 const bookmarkGroup = document.querySelector('#bookmarkGroup');
+const bookmarkNewGroupWrap = document.querySelector('#bookmarkNewGroupWrap');
+const bookmarkNewGroup = document.querySelector('#bookmarkNewGroup');
 const groupDialog = document.querySelector('#groupDialog');
 const groupForm = document.querySelector('#groupForm');
 const groupDialogTitle = document.querySelector('#groupDialogTitle');
@@ -68,7 +69,7 @@ const bookmarkTemplate = document.querySelector('#bookmarkTemplate');
 
 applyTheme(localStorage.getItem(THEME_KEY) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 applyFont(localStorage.getItem(FONT_KEY) || 'system');
-applyFontSize(localStorage.getItem(FONT_SIZE_KEY) || '14');
+applyFontSize(localStorage.getItem(FONT_SIZE_KEY) || '17');
 render();
 
 function loadState() {
@@ -153,7 +154,19 @@ function render() {
     board.appendChild(groupNode);
   });
 
-  emptyState.hidden = state.groups.length > 0;
+  const hasVisibleGroups = board.childElementCount > 0;
+  emptyState.hidden = hasVisibleGroups;
+  if (!hasVisibleGroups) {
+    const heading = emptyState.querySelector('h2');
+    const copy = emptyState.querySelector('p');
+    if (q) {
+      heading.textContent = 'No matches';
+      copy.textContent = 'Try a different search.';
+    } else {
+      heading.textContent = 'No bookmarks yet';
+      copy.textContent = 'Choose Edit, then Add to create a bookmark or group.';
+    }
+  }
 }
 
 function setEditing(value) {
@@ -161,17 +174,32 @@ function setEditing(value) {
   document.body.classList.toggle('editing', editing);
   editBtn.classList.toggle('active', editing);
   editBtn.textContent = editing ? 'Done' : 'Edit';
-  addGroupBtn.hidden = !editing;
-  importBtn.hidden = !editing;
+  if (!editing) setAddMenu(false);
   render();
 }
 
 editBtn.addEventListener('click', () => setEditing(!editing));
 searchInput.addEventListener('input', render);
-addGroupBtn.addEventListener('click', () => openGroupDialog());
-importBtn.addEventListener('click', openImportDialog);
-importFile.addEventListener('change', prepareImport);
-importForm.addEventListener('submit', performImport);
+
+addBtn.addEventListener('click', event => {
+  event.stopPropagation();
+  setAddMenu(addMenu.hidden);
+});
+addMenu.addEventListener('click', event => event.stopPropagation());
+addBookmarkBtn.addEventListener('click', () => {
+  setAddMenu(false);
+  openBookmarkDialog(null);
+});
+addGroupMenuBtn.addEventListener('click', () => {
+  setAddMenu(false);
+  openGroupDialog();
+});
+
+importBtn.addEventListener('click', () => {
+  importFile.value = '';
+  importFile.click();
+});
+importFile.addEventListener('change', importSelectedFile);
 
 themeBtn.addEventListener('click', () => {
   const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -186,7 +214,10 @@ appearanceBtn.addEventListener('click', event => {
 appearancePanel.addEventListener('click', event => event.stopPropagation());
 fontSelect.addEventListener('change', () => applyFont(fontSelect.value));
 fontSizeSelect.addEventListener('change', () => applyFontSize(fontSizeSelect.value));
-document.addEventListener('click', () => setAppearancePanel(false));
+document.addEventListener('click', () => {
+  setAppearancePanel(false);
+  setAddMenu(false);
+});
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
@@ -207,7 +238,7 @@ function applyFont(font) {
 }
 
 function applyFontSize(size) {
-  const value = Math.min(18, Math.max(13, Number(size) || 14));
+  const value = Math.min(24, Math.max(16, Number(size) || 17));
   document.documentElement.style.setProperty('--bookmark-font-size', `${value}px`);
   fontSizeSelect.value = String(value);
   localStorage.setItem(FONT_SIZE_KEY, String(value));
@@ -218,24 +249,54 @@ function setAppearancePanel(open) {
   appearanceBtn.setAttribute('aria-expanded', String(open));
 }
 
+function setAddMenu(open) {
+  addMenu.hidden = !open;
+  addBtn.setAttribute('aria-expanded', String(open));
+}
+
 function populateGroupSelect(selectedId) {
   bookmarkGroup.innerHTML = '';
+
   state.groups.forEach(group => {
     const option = document.createElement('option');
     option.value = group.id;
     option.textContent = group.name;
-    option.selected = group.id === selectedId;
     bookmarkGroup.appendChild(option);
   });
+
+  const newOption = document.createElement('option');
+  newOption.value = '__new__';
+  newOption.textContent = '+ New group…';
+  bookmarkGroup.appendChild(newOption);
+
+  if (selectedId && state.groups.some(group => group.id === selectedId)) {
+    bookmarkGroup.value = selectedId;
+  } else if (state.groups.length) {
+    bookmarkGroup.value = state.groups[0].id;
+  } else {
+    bookmarkGroup.value = '__new__';
+  }
+
+  updateNewGroupField();
 }
+
+function updateNewGroupField() {
+  const creating = bookmarkGroup.value === '__new__';
+  bookmarkNewGroupWrap.hidden = !creating;
+  bookmarkNewGroup.required = creating;
+  if (creating && !bookmarkNewGroup.value.trim()) bookmarkNewGroup.value = 'Bookmarks';
+}
+
+bookmarkGroup.addEventListener('change', updateNewGroupField);
 
 function openBookmarkDialog(groupId, bookmarkId = null) {
   editBookmarkId = bookmarkId;
-  const group = state.groups.find(g => g.id === groupId);
+  const group = groupId ? state.groups.find(g => g.id === groupId) : null;
   const bookmark = bookmarkId ? group?.bookmarks.find(b => b.id === bookmarkId) : null;
   bookmarkDialogTitle.textContent = bookmark ? 'Edit bookmark' : 'Add bookmark';
   bookmarkTitle.value = bookmark?.title || '';
   bookmarkUrl.value = bookmark?.url || '';
+  bookmarkNewGroup.value = '';
   populateGroupSelect(groupId);
   bookmarkDialog.showModal();
   setTimeout(() => bookmarkTitle.focus(), 0);
@@ -247,8 +308,22 @@ bookmarkForm.addEventListener('submit', event => {
 
   const title = bookmarkTitle.value.trim();
   const url = normalizedUrl(bookmarkUrl.value);
-  const targetGroupId = bookmarkGroup.value;
   if (!title || !url) return;
+
+  let targetGroupId = bookmarkGroup.value;
+  if (targetGroupId === '__new__') {
+    const newName = bookmarkNewGroup.value.trim();
+    if (!newName) {
+      bookmarkNewGroup.focus();
+      return;
+    }
+    let targetGroup = state.groups.find(group => group.name.trim().toLocaleLowerCase() === newName.toLocaleLowerCase());
+    if (!targetGroup) {
+      targetGroup = { id: makeId(), name: newName, bookmarks: [] };
+      state.groups.push(targetGroup);
+    }
+    targetGroupId = targetGroup.id;
+  }
 
   if (editBookmarkId) {
     let currentGroup = null;
@@ -436,92 +511,66 @@ function moveBookmark(payload, targetGroupId, beforeBookmarkId) {
 }
 
 
-function openImportDialog() {
-  pendingImport = null;
-  importForm.reset();
-  importPreview.hidden = true;
-  importPreview.textContent = '';
-  importResult.hidden = true;
-  importResult.textContent = '';
-  importSubmitBtn.disabled = true;
-  importFile.disabled = false;
-  importDialog.showModal();
-}
-
-async function prepareImport() {
-  pendingImport = null;
-  importPreview.hidden = true;
-  importResult.hidden = true;
-  importSubmitBtn.disabled = true;
-
+async function importSelectedFile() {
   const file = importFile.files?.[0];
   if (!file) return;
+
+  const originalLabel = importBtn.textContent;
+  importBtn.disabled = true;
+  importBtn.textContent = 'Importing…';
 
   try {
     const text = await file.text();
     const parsed = parseBookmarkHtml(text);
     const plan = buildImportPlan(parsed);
-    pendingImport = plan;
 
-    if (plan.additions.length === 0) {
+    if (!plan.additions.length) {
       const details = [];
-      if (plan.duplicates) details.push(`${plan.duplicates} duplicate${plan.duplicates === 1 ? '' : 's'}`);
-      if (plan.ignored) details.push(`${plan.ignored} unsupported or invalid link${plan.ignored === 1 ? '' : 's'}`);
-      importPreview.textContent = details.length
-        ? `No new bookmarks to import. ${details.join(' and ')} found.`
-        : 'No bookmarks were found in this file.';
-      importPreview.hidden = false;
+      if (plan.duplicates) details.push(`${plan.duplicates} duplicate${plan.duplicates === 1 ? '' : 's'} skipped`);
+      if (plan.ignored) details.push(`${plan.ignored} unsupported or invalid link${plan.ignored === 1 ? '' : 's'} ignored`);
+      showToast(details.length ? `No new bookmarks. ${details.join(', ')}.` : 'No bookmarks were found in that file.');
       return;
     }
 
+    const groupsByName = new Map(
+      state.groups.map(group => [group.name.trim().toLocaleLowerCase(), group])
+    );
+
+    plan.additions.forEach(item => {
+      const key = item.groupName.trim().toLocaleLowerCase();
+      let group = groupsByName.get(key);
+      if (!group) {
+        group = { id: makeId(), name: item.groupName, bookmarks: [] };
+        state.groups.push(group);
+        groupsByName.set(key, group);
+      }
+      group.bookmarks.push({ id: makeId(), title: item.title, url: item.url });
+    });
+
+    saveState();
+    render();
+
     const groupCount = new Set(plan.additions.map(item => item.groupName)).size;
-    const details = [`${plan.additions.length} new bookmark${plan.additions.length === 1 ? '' : 's'}`, `${groupCount} group${groupCount === 1 ? '' : 's'}`];
-    if (plan.duplicates) details.push(`${plan.duplicates} duplicate${plan.duplicates === 1 ? '' : 's'} skipped`);
-    if (plan.ignored) details.push(`${plan.ignored} unsupported or invalid link${plan.ignored === 1 ? '' : 's'} ignored`);
-    importPreview.textContent = `Ready to import ${details.join(', ')}.`;
-    importPreview.hidden = false;
-    importSubmitBtn.disabled = false;
+    const summary = [`Imported ${plan.additions.length} bookmark${plan.additions.length === 1 ? '' : 's'} into ${groupCount} group${groupCount === 1 ? '' : 's'}.`];
+    if (plan.duplicates) summary.push(`Skipped ${plan.duplicates} duplicate${plan.duplicates === 1 ? '' : 's'}.`);
+    if (plan.ignored) summary.push(`Ignored ${plan.ignored} unsupported or invalid link${plan.ignored === 1 ? '' : 's'}.`);
+    showToast(summary.join(' '));
   } catch (error) {
-    importPreview.textContent = 'Launchpad could not read this bookmark file.';
-    importPreview.hidden = false;
+    console.error(error);
+    showToast('Launchpad could not read that bookmark file.');
+  } finally {
+    importBtn.disabled = false;
+    importBtn.textContent = originalLabel;
+    importFile.value = '';
   }
 }
 
-function performImport(event) {
-  if (event.submitter?.value !== 'import') return;
-  event.preventDefault();
-  if (!pendingImport?.additions?.length) return;
-
-  const groupsByName = new Map(
-    state.groups.map(group => [group.name.trim().toLocaleLowerCase(), group])
-  );
-
-  pendingImport.additions.forEach(item => {
-    const key = item.groupName.trim().toLocaleLowerCase();
-    let group = groupsByName.get(key);
-    if (!group) {
-      group = { id: makeId(), name: item.groupName, bookmarks: [] };
-      state.groups.push(group);
-      groupsByName.set(key, group);
-    }
-    group.bookmarks.push({ id: makeId(), title: item.title, url: item.url });
-  });
-
-  saveState();
-  render();
-
-  const imported = pendingImport.additions.length;
-  const skipped = pendingImport.duplicates;
-  const ignored = pendingImport.ignored;
-  const summary = [`Imported ${imported} bookmark${imported === 1 ? '' : 's'}.`];
-  if (skipped) summary.push(`Skipped ${skipped} duplicate${skipped === 1 ? '' : 's'}.`);
-  if (ignored) summary.push(`Ignored ${ignored} unsupported or invalid link${ignored === 1 ? '' : 's'}.`);
-  importResult.textContent = summary.join(' ');
-  importResult.hidden = false;
-  importPreview.hidden = true;
-  importSubmitBtn.disabled = true;
-  importFile.disabled = true;
-  pendingImport = null;
+let toastTimer = null;
+function showToast(message) {
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.hidden = false;
+  toastTimer = setTimeout(() => { toast.hidden = true; }, 5000);
 }
 
 function parseBookmarkHtml(html) {
@@ -568,6 +617,22 @@ function parseBookmarkHtml(html) {
         url
       });
     }
+  }
+
+  if (bookmarks.length === 0) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    doc.querySelectorAll('a[href]').forEach(anchor => {
+      const url = canonicalHttpUrl(anchor.getAttribute('href') || '');
+      if (!url) {
+        ignored += 1;
+        return;
+      }
+      bookmarks.push({
+        groupName: 'Imported',
+        title: anchor.textContent?.trim() || titleFromUrl(url),
+        url
+      });
+    });
   }
 
   return { bookmarks, ignored };
