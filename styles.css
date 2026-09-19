@@ -717,3 +717,28 @@ body.editing .card-edit-footer { display: grid; }
 
 /* v0.3.3: explicit subfolder drag handle interaction */
 .subfolder-drag-handle:active { cursor: grabbing; }
+
+
+/* v0.3.4: folders can move between cards; card header is a generous drop target. */
+body.editing .subfolder-list:empty { min-height: 12px; }
+.group-card.folder-card-drop-target {
+  outline: 1px solid color-mix(in srgb, var(--text) 34%, transparent);
+  outline-offset: -1px;
+}
+
+
+/* v0.3.5: make the whole subfolder header the drag target in Edit mode. */
+body.editing .subfolder-header[draggable="true"] {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body.editing .subfolder-header[draggable="true"]:active { cursor: grabbing; }
+body.editing .subfolder-drag-handle {
+  flex-basis: 24px;
+  width: 24px;
+  height: 28px;
+  margin-left: 2px;
+  opacity: .72;
+  pointer-events: none;
+}

@@ -40,6 +40,7 @@ let editFolderGroupId = null;
 let dragPayload = null;
 let bookmarkDialogScopeGroupId = null;
 let folderDialogScopeGroupId = null;
+let pendingDragScrollState = null;
 
 const board = document.querySelector('#board');
 const emptyState = document.querySelector('#emptyState');
@@ -231,8 +232,8 @@ function restoreScrollState(scrollState) {
   });
 }
 
-function render({ preserveScroll = false } = {}) {
-  const scrollState = preserveScroll ? captureScrollState() : null;
+function render({ preserveScroll = false, restoreScroll = null } = {}) {
+  const scrollState = restoreScroll || (preserveScroll ? captureScrollState() : null);
   const q = searchInput.value.trim().toLowerCase();
   board.innerHTML = '';
 
@@ -301,6 +302,7 @@ function render({ preserveScroll = false } = {}) {
     });
 
     setupFolderListDrop(folderList);
+    setupCardFolderDrop(groupNode, group.id);
 
     groupNode.querySelector('.add-bookmark')?.addEventListener('click', () => openBookmarkDialog(group.id, null, { local: true }));
     groupNode.querySelector('.add-subfolder')?.addEventListener('click', () => openFolderDialog(group.id, null, { local: true }));
@@ -686,10 +688,16 @@ function clearGroupDropIndicators() {
 }
 
 function setupGroupDrag(node) {
+  node.addEventListener('pointerdown', event => {
+    if (!editing || searchInput.value.trim()) return;
+    if (event.target.closest('.card-scroll, button, a, input, select')) return;
+    pendingDragScrollState = captureScrollState();
+  });
+
   node.addEventListener('dragstart', event => {
     if (!editing || searchInput.value.trim()) return event.preventDefault();
     if (event.target.closest('.card-scroll, button, a, input, select')) return event.preventDefault();
-    dragPayload = { type: 'group', groupId: node.dataset.groupId };
+    dragPayload = { type: 'group', groupId: node.dataset.groupId, scrollState: pendingDragScrollState || captureScrollState() };
     node.classList.add('dragging');
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', node.dataset.groupId);
@@ -699,6 +707,7 @@ function setupGroupDrag(node) {
     node.classList.remove('dragging');
     clearGroupDropIndicators();
     dragPayload = null;
+    pendingDragScrollState = null;
   });
 
   node.addEventListener('dragover', event => {
@@ -720,7 +729,8 @@ function setupGroupDrag(node) {
     event.stopPropagation();
     node.classList.remove('group-drop-target');
 
-    const fromIndex = state.groups.findIndex(group => group.id === dragPayload.groupId);
+    const payload = { ...dragPayload };
+    const fromIndex = state.groups.findIndex(group => group.id === payload.groupId);
     const toIndex = state.groups.findIndex(group => group.id === node.dataset.groupId);
     if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
 
@@ -728,7 +738,7 @@ function setupGroupDrag(node) {
     const adjustedIndex = state.groups.findIndex(group => group.id === node.dataset.groupId);
     state.groups.splice(adjustedIndex, 0, moved);
     saveState();
-    render({ preserveScroll: true });
+    render({ restoreScroll: payload.scrollState || null });
   });
 }
 
@@ -752,12 +762,13 @@ function setupBoardGroupDrop() {
     event.preventDefault();
     board.classList.remove('group-drop-end');
 
-    const fromIndex = state.groups.findIndex(group => group.id === dragPayload.groupId);
+    const payload = { ...dragPayload };
+    const fromIndex = state.groups.findIndex(group => group.id === payload.groupId);
     if (fromIndex < 0) return;
     const [moved] = state.groups.splice(fromIndex, 1);
     state.groups.push(moved);
     saveState();
-    render({ preserveScroll: true });
+    render({ restoreScroll: payload.scrollState || null });
   });
 }
 
@@ -771,6 +782,11 @@ function clearBookmarkDropIndicators() {
 }
 
 function setupBookmarkDrag(row) {
+  const handle = row.querySelector('.bookmark-drag-handle');
+  handle?.addEventListener('pointerdown', () => {
+    if (editing && !searchInput.value.trim()) pendingDragScrollState = captureScrollState();
+  });
+
   row.addEventListener('dragstart', event => {
     if (!editing || searchInput.value.trim() || !event.target.closest('.bookmark-drag-handle')) return event.preventDefault();
     event.stopPropagation();
@@ -778,7 +794,8 @@ function setupBookmarkDrag(row) {
       type: 'bookmark',
       bookmarkId: row.dataset.bookmarkId,
       sourceGroupId: row.dataset.groupId,
-      sourceFolderId: row.dataset.folderId || null
+      sourceFolderId: row.dataset.folderId || null,
+      scrollState: pendingDragScrollState || captureScrollState()
     };
     row.classList.add('dragging');
     event.dataTransfer.effectAllowed = 'move';
@@ -790,6 +807,7 @@ function setupBookmarkDrag(row) {
     row.classList.remove('dragging');
     clearBookmarkDropIndicators();
     dragPayload = null;
+    pendingDragScrollState = null;
   });
 
   row.addEventListener('dragover', event => {
@@ -890,7 +908,7 @@ function moveBookmark(payload, targetGroupId, targetFolderId = null, targetBookm
   }
 
   saveState();
-  render({ preserveScroll: true });
+  render({ restoreScroll: payload.scrollState || null });
 }
 
 function clearFolderDropIndicators() {
@@ -899,38 +917,57 @@ function clearFolderDropIndicators() {
     delete element.dataset.dropPosition;
   });
   document.querySelectorAll('.subfolder-list.folder-drop-end').forEach(element => element.classList.remove('folder-drop-end'));
+  document.querySelectorAll('.group-card.folder-card-drop-target').forEach(element => element.classList.remove('folder-card-drop-target'));
 }
 
 function setupFolderDrag(folderNode) {
+  const header = folderNode.querySelector('.subfolder-header');
   const handle = folderNode.querySelector('.subfolder-drag-handle');
+  if (!header) return;
+
   folderNode.draggable = false;
-  if (!handle) return;
+  if (handle) handle.draggable = false;
+  header.draggable = editing && !searchInput.value.trim();
 
-  // The handle owns the drag directly. This avoids relying on a dragstart
-  // event bubbling through the folder and competing with the draggable card.
-  handle.draggable = editing && !searchInput.value.trim();
+  header.addEventListener('pointerdown', event => {
+    if (!editing || searchInput.value.trim() || event.target.closest('.subfolder-edit')) return;
+    pendingDragScrollState = captureScrollState();
+  });
 
-  handle.addEventListener('dragstart', event => {
+  header.addEventListener('dragstart', event => {
     if (!editing || searchInput.value.trim()) {
       event.preventDefault();
       return;
     }
+    // Keep the explicit Edit button clickable. The rest of the folder header is a drag target.
+    if (event.target.closest('.subfolder-edit')) {
+      event.preventDefault();
+      return;
+    }
     event.stopPropagation();
-    dragPayload = { type: 'folder', groupId: folderNode.dataset.groupId, folderId: folderNode.dataset.folderId };
+    dragPayload = {
+      type: 'folder',
+      groupId: folderNode.dataset.groupId,
+      folderId: folderNode.dataset.folderId,
+      scrollState: pendingDragScrollState || captureScrollState()
+    };
     folderNode.classList.add('dragging');
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', folderNode.dataset.folderId);
   });
 
-  handle.addEventListener('dragend', event => {
+  header.addEventListener('dragend', event => {
     event.stopPropagation();
     folderNode.classList.remove('dragging');
     clearFolderDropIndicators();
     dragPayload = null;
+    pendingDragScrollState = null;
   });
 
   folderNode.addEventListener('dragover', event => {
-    if (dragPayload?.type !== 'folder' || dragPayload.groupId !== folderNode.dataset.groupId || dragPayload.folderId === folderNode.dataset.folderId) return;
+    if (dragPayload?.type !== 'folder') return;
+    const isSelf = dragPayload.groupId === folderNode.dataset.groupId && dragPayload.folderId === folderNode.dataset.folderId;
+    if (isSelf) return;
     event.preventDefault();
     event.stopPropagation();
     clearFolderDropIndicators();
@@ -947,19 +984,21 @@ function setupFolderDrag(folderNode) {
   });
 
   folderNode.addEventListener('drop', event => {
-    if (dragPayload?.type !== 'folder' || dragPayload.groupId !== folderNode.dataset.groupId) return;
+    if (dragPayload?.type !== 'folder') return;
+    const isSelf = dragPayload.groupId === folderNode.dataset.groupId && dragPayload.folderId === folderNode.dataset.folderId;
+    if (isSelf) return;
     event.preventDefault();
     event.stopPropagation();
     const position = folderNode.dataset.dropPosition || 'before';
     const payload = { ...dragPayload };
     clearFolderDropIndicators();
-    moveFolder(payload.groupId, payload.folderId, folderNode.dataset.folderId, position);
+    moveFolder(payload.groupId, payload.folderId, folderNode.dataset.groupId, folderNode.dataset.folderId, position, payload.scrollState || null);
   });
 }
 
 function setupFolderListDrop(list) {
   list.addEventListener('dragover', event => {
-    if (dragPayload?.type !== 'folder' || dragPayload.groupId !== list.dataset.groupId) return;
+    if (dragPayload?.type !== 'folder') return;
     if (event.target.closest('.subfolder')) return;
     event.preventDefault();
     event.stopPropagation();
@@ -971,34 +1010,66 @@ function setupFolderListDrop(list) {
     list.classList.remove('folder-drop-end');
   });
   list.addEventListener('drop', event => {
-    if (dragPayload?.type !== 'folder' || dragPayload.groupId !== list.dataset.groupId) return;
+    if (dragPayload?.type !== 'folder') return;
     if (event.target.closest('.subfolder')) return;
     event.preventDefault();
     event.stopPropagation();
     const payload = { ...dragPayload };
     clearFolderDropIndicators();
-    moveFolder(payload.groupId, payload.folderId, null, 'end');
+    moveFolder(payload.groupId, payload.folderId, list.dataset.groupId, null, 'end', payload.scrollState || null);
   });
 }
 
-function moveFolder(groupId, folderId, targetFolderId = null, position = 'end') {
-  const group = getGroup(groupId);
-  if (!group) return;
-  const sourceIndex = group.folders.findIndex(folder => folder.id === folderId);
-  if (sourceIndex < 0) return;
-  const [moved] = group.folders.splice(sourceIndex, 1);
+function setupCardFolderDrop(groupNode, groupId) {
+  const header = groupNode.querySelector('.group-header');
+  if (!header) return;
 
-  if (!targetFolderId || position === 'end') group.folders.push(moved);
-  else {
-    let targetIndex = group.folders.findIndex(folder => folder.id === targetFolderId);
-    if (targetIndex < 0) group.folders.push(moved);
+  header.addEventListener('dragover', event => {
+    if (dragPayload?.type !== 'folder') return;
+    event.preventDefault();
+    event.stopPropagation();
+    clearFolderDropIndicators();
+    groupNode.classList.add('folder-card-drop-target');
+  });
+
+  header.addEventListener('dragleave', event => {
+    if (event.relatedTarget && header.contains(event.relatedTarget)) return;
+    groupNode.classList.remove('folder-card-drop-target');
+  });
+
+  header.addEventListener('drop', event => {
+    if (dragPayload?.type !== 'folder') return;
+    event.preventDefault();
+    event.stopPropagation();
+    const payload = { ...dragPayload };
+    groupNode.classList.remove('folder-card-drop-target');
+    clearFolderDropIndicators();
+    moveFolder(payload.groupId, payload.folderId, groupId, null, 'end', payload.scrollState || null);
+  });
+}
+
+function moveFolder(sourceGroupId, folderId, targetGroupId, targetFolderId = null, position = 'end', scrollState = null) {
+  const sourceGroup = getGroup(sourceGroupId);
+  const targetGroup = getGroup(targetGroupId);
+  if (!sourceGroup || !targetGroup) return;
+
+  const sourceIndex = sourceGroup.folders.findIndex(folder => folder.id === folderId);
+  if (sourceIndex < 0) return;
+  const [moved] = sourceGroup.folders.splice(sourceIndex, 1);
+
+  if (!targetFolderId || position === 'end') {
+    targetGroup.folders.push(moved);
+  } else {
+    let targetIndex = targetGroup.folders.findIndex(folder => folder.id === targetFolderId);
+    if (targetIndex < 0) targetGroup.folders.push(moved);
     else {
       if (position === 'after') targetIndex += 1;
-      group.folders.splice(targetIndex, 0, moved);
+      targetGroup.folders.splice(targetIndex, 0, moved);
     }
   }
+
   saveState();
-  render({ preserveScroll: true });
+  render({ restoreScroll: scrollState });
 }
 
 async function importSelectedFile() {
