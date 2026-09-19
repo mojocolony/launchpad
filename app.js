@@ -484,6 +484,16 @@ function setupBoardGroupDrop() {
   });
 }
 
+function clearBookmarkDropIndicators() {
+  document.querySelectorAll('.bookmark-row.bookmark-drop-before, .bookmark-row.bookmark-drop-after').forEach(el => {
+    el.classList.remove('bookmark-drop-before', 'bookmark-drop-after');
+    delete el.dataset.dropPosition;
+  });
+  document.querySelectorAll('.bookmark-list.bookmark-drop-end').forEach(el => {
+    el.classList.remove('bookmark-drop-end');
+  });
+}
+
 function setupBookmarkDrag(row) {
   row.addEventListener('dragstart', event => {
     if (!editing || searchInput.value.trim()) return event.preventDefault();
@@ -495,49 +505,73 @@ function setupBookmarkDrag(row) {
     };
     row.classList.add('dragging');
     event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', row.dataset.bookmarkId);
   });
 
   row.addEventListener('dragend', event => {
     event.stopPropagation();
     row.classList.remove('dragging');
-    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    clearBookmarkDropIndicators();
     dragPayload = null;
   });
 
   row.addEventListener('dragover', event => {
     if (dragPayload?.type !== 'bookmark' || dragPayload.bookmarkId === row.dataset.bookmarkId) return;
     event.preventDefault();
+    event.stopPropagation();
+
+    clearBookmarkDropIndicators();
+    const rect = row.getBoundingClientRect();
+    const position = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+    row.dataset.dropPosition = position;
+    row.classList.add(position === 'before' ? 'bookmark-drop-before' : 'bookmark-drop-after');
+  });
+
+  row.addEventListener('dragleave', event => {
+    if (event.relatedTarget && row.contains(event.relatedTarget)) return;
+    row.classList.remove('bookmark-drop-before', 'bookmark-drop-after');
+    delete row.dataset.dropPosition;
   });
 
   row.addEventListener('drop', event => {
-    if (dragPayload?.type !== 'bookmark') return;
+    if (dragPayload?.type !== 'bookmark' || dragPayload.bookmarkId === row.dataset.bookmarkId) return;
     event.preventDefault();
     event.stopPropagation();
-    moveBookmark(dragPayload, row.dataset.groupId, row.dataset.bookmarkId);
+
+    const position = row.dataset.dropPosition || 'before';
+    const payload = { ...dragPayload };
+    clearBookmarkDropIndicators();
+    moveBookmark(payload, row.dataset.groupId, row.dataset.bookmarkId, position);
   });
 }
 
 function setupListDrop(list) {
   list.addEventListener('dragover', event => {
     if (dragPayload?.type !== 'bookmark') return;
+    if (event.target.closest('.bookmark-row')) return;
     event.preventDefault();
-    list.classList.add('drag-over');
+    event.stopPropagation();
+    clearBookmarkDropIndicators();
+    list.classList.add('bookmark-drop-end');
   });
 
   list.addEventListener('dragleave', event => {
-    if (!list.contains(event.relatedTarget)) list.classList.remove('drag-over');
+    if (event.relatedTarget && list.contains(event.relatedTarget)) return;
+    list.classList.remove('bookmark-drop-end');
   });
 
   list.addEventListener('drop', event => {
     if (dragPayload?.type !== 'bookmark') return;
-    event.preventDefault();
-    list.classList.remove('drag-over');
     if (event.target.closest('.bookmark-row')) return;
-    moveBookmark(dragPayload, list.dataset.groupId, null);
+    event.preventDefault();
+    event.stopPropagation();
+    const payload = { ...dragPayload };
+    clearBookmarkDropIndicators();
+    moveBookmark(payload, list.dataset.groupId, null, 'end');
   });
 }
 
-function moveBookmark(payload, targetGroupId, beforeBookmarkId) {
+function moveBookmark(payload, targetGroupId, targetBookmarkId = null, position = 'end') {
   const source = state.groups.find(g => g.id === payload.sourceGroupId);
   const target = state.groups.find(g => g.id === targetGroupId);
   if (!source || !target) return;
@@ -546,12 +580,16 @@ function moveBookmark(payload, targetGroupId, beforeBookmarkId) {
   if (sourceIndex < 0) return;
   const [moved] = source.bookmarks.splice(sourceIndex, 1);
 
-  if (beforeBookmarkId) {
-    let targetIndex = target.bookmarks.findIndex(b => b.id === beforeBookmarkId);
-    if (targetIndex < 0) targetIndex = target.bookmarks.length;
-    target.bookmarks.splice(targetIndex, 0, moved);
-  } else {
+  if (!targetBookmarkId || position === 'end') {
     target.bookmarks.push(moved);
+  } else {
+    let targetIndex = target.bookmarks.findIndex(b => b.id === targetBookmarkId);
+    if (targetIndex < 0) {
+      target.bookmarks.push(moved);
+    } else {
+      if (position === 'after') targetIndex += 1;
+      target.bookmarks.splice(targetIndex, 0, moved);
+    }
   }
 
   saveState();

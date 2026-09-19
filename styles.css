@@ -136,7 +136,33 @@ main { padding: 26px 24px 72px; }
 }
 
 .group-card.dragging, .bookmark-row.dragging { opacity: .45; }
-.bookmark-list.drag-over { outline: 2px solid var(--text); outline-offset: 3px; }
+/* Bookmark reordering uses explicit insertion markers between rows. */
+.bookmark-row.bookmark-drop-before,
+.bookmark-row.bookmark-drop-after { position: relative; }
+.bookmark-row.bookmark-drop-before::before,
+.bookmark-row.bookmark-drop-after::after {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  left: 8px;
+  right: 8px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--text);
+  pointer-events: none;
+}
+.bookmark-row.bookmark-drop-before::before { top: -3px; }
+.bookmark-row.bookmark-drop-after::after { bottom: -3px; }
+.bookmark-list.bookmark-drop-end { position: relative; }
+.bookmark-list.bookmark-drop-end::after {
+  content: '';
+  display: block;
+  height: 3px;
+  margin: 5px 8px 2px;
+  border-radius: 3px;
+  background: var(--text);
+  pointer-events: none;
+}
 
 /* Group reordering uses a simple insertion marker, not a card highlight. */
 .group-card.group-drop-target { position: relative; }

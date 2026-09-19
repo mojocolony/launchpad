@@ -1,8 +1,8 @@
-# Launchpad v0.2.5
+# Launchpad v0.2.6
 
 A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
-## Included in v0.2.5
+## Included in v0.2.6
 
 - Responsive bookmark groups
 - Add, edit and delete groups
@@ -10,44 +10,34 @@ A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and J
 - Add, edit, move and delete bookmarks
 - Drag-and-drop group ordering
 - Drag-and-drop bookmark ordering and moving between groups
+- Clear bookmark insertion markers while dragging
 - Search by group, title or URL
 - Automatic favicons
 - Light/dark mode
 - Font selector: System, Bookerly, IBM Plex Mono, iA Writer Duo
-- Larger font-size range: 16–24 px
+- Font-size range: 16–24 px
 - Browser bookmark HTML import
 - Duplicate URL protection during import
 - LocalStorage persistence
 - Visible version number
 - No npm, build process or local development environment required
 
-## What changed in v0.2.5
+## What changed in v0.2.6
 
-- Restored the reliable group-card drag behaviour from v0.2.2.
-- Replaced whole-card drag highlighting with a simple insertion line.
-- Dropping in empty space at the end of the board moves a group to the end.
-- Desktop group cards show about 15 bookmarks at a time and scroll internally for additional links.
-
-- Desktop groups are now **320 px wide**, giving bookmark titles substantially more room.
-- Desktop groups stay in **one horizontal row** instead of wrapping to a second grid row.
-- When there are more groups than fit on screen, the board scrolls horizontally.
-- Mobile remains a normal single-column layout.
-- Group reordering keeps the v0.2.3 before/after insertion-line feedback.
+- Bookmark dragging now shows an explicit horizontal insertion line **above or below** the row under the pointer.
+- The insertion position follows the upper or lower half of the hovered bookmark row.
+- Moving bookmarks between groups uses the same insertion feedback.
+- Dropping in the empty area at the bottom of a group shows an end-of-list insertion line.
+- The existing v0.2.5 group dragging, 320 px desktop cards, single horizontal group row, and approximately 15-link internal card scrolling are retained.
 - Existing bookmarks and appearance settings remain under the same LocalStorage key.
 
 ## Bookmark import
 
-Enter **Edit** mode and choose **Import**. The browser file picker opens immediately. Select a standard HTML bookmark export from Safari, Chrome, Firefox or Edge.
-
-Launchpad merges imported bookmarks with existing content. Existing URLs are skipped rather than duplicated. Browser folders become Launchpad groups. Nested folders are flattened into readable group paths such as `Research › Architecture`. Only normal `http://` and `https://` links are imported.
-
-A status message appears at the bottom after the import reports how many bookmarks were imported, skipped or ignored.
+Enter **Edit** mode and choose **Import**. Select a standard HTML bookmark export from Safari, Chrome, Firefox or Edge. Launchpad merges it with existing content and skips duplicate URLs.
 
 ## Manual bookmark entry
 
-Enter **Edit** mode and choose **Add → Bookmark**. Enter a title and URL, then choose an existing group or create a new one from the same dialog.
-
-You can also use **+ Add bookmark** at the bottom of any existing group while in Edit mode.
+Enter **Edit** mode and choose **Add → Bookmark**, or use **+ Add bookmark** at the bottom of an existing group.
 
 ## Deploy to GitHub Pages
 
@@ -55,44 +45,24 @@ Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files
 
 ## Version history
 
+### v0.2.5
+
+- Restored group-card dragging
+- Added 15-link internal card scrolling on desktop
+- Kept desktop groups in one wider horizontal row
+
 ### v0.2.4
 
 - Widened desktop group cards to 320 px
 - Prevented desktop groups from wrapping onto a second row
-- Added horizontal board scrolling for additional groups
-- Preserved single-column mobile layout
-- Retained insertion-line group drag feedback
+- Added horizontal board scrolling
 
 ### v0.2.3
 
-- Changed group reordering to a before/after insertion line instead of whole-card highlighting
-- Increased content font-size range to 16–24 px
-- Set a larger 17 px default
-- Made group headings scale with the selected content size
-- Updated visible version number
+- Added insertion-line feedback for group reordering
 
-### v0.2.1
+### v0.2.2
 
-- Corrected top-bar control alignment
-- Added an **Add** menu for manual bookmark/group creation
-- Changed import to a direct file-picker workflow
-- Added import status messages and a fallback parser
-
-### v0.2.0
-
-- Added standard browser bookmark HTML import
-- Converts browser folders into Launchpad groups
-- Preserves nested folder names as group paths
-- Merges with existing groups when names match
-- Skips duplicate URLs
-
-### v0.1.2
-
-- Simplified font choices to System, Bookerly, IBM Plex Mono and iA Writer Duo
-
-### v0.1.1
-
-- Added font selector
-- Added font-size selector
-- Added persistent appearance preferences
-- Added visible version number
+- Added larger 16–24 px font-size range
+- Improved top-bar alignment
+- Added manual bookmark creation and direct bookmark import
