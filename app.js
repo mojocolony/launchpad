@@ -60,6 +60,7 @@ const bookmarkUrl = document.querySelector('#bookmarkUrl');
 const bookmarkGroup = document.querySelector('#bookmarkGroup');
 const bookmarkNewGroupWrap = document.querySelector('#bookmarkNewGroupWrap');
 const bookmarkNewGroup = document.querySelector('#bookmarkNewGroup');
+const bookmarkDeleteBtn = document.querySelector('#bookmarkDeleteBtn');
 const groupDialog = document.querySelector('#groupDialog');
 const groupForm = document.querySelector('#groupForm');
 const groupDialogTitle = document.querySelector('#groupDialogTitle');
@@ -124,7 +125,9 @@ function render() {
       const row = bookmarkTemplate.content.firstElementChild.cloneNode(true);
       row.dataset.bookmarkId = bookmark.id;
       row.dataset.groupId = group.id;
-      row.draggable = editing && !q;
+      row.draggable = false;
+      const dragHandle = row.querySelector('.bookmark-drag-handle');
+      dragHandle.draggable = editing && !q;
 
       const link = row.querySelector('.bookmark-link');
       link.href = bookmark.url;
@@ -137,11 +140,6 @@ function render() {
         e.preventDefault();
         openBookmarkDialog(group.id, bookmark.id);
       });
-      row.querySelector('.bookmark-delete').addEventListener('click', e => {
-        e.preventDefault();
-        deleteBookmark(group.id, bookmark.id);
-      });
-
       setupBookmarkDrag(row);
       list.appendChild(row);
     });
@@ -295,6 +293,7 @@ function openBookmarkDialog(groupId, bookmarkId = null) {
   const group = groupId ? state.groups.find(g => g.id === groupId) : null;
   const bookmark = bookmarkId ? group?.bookmarks.find(b => b.id === bookmarkId) : null;
   bookmarkDialogTitle.textContent = bookmark ? 'Edit bookmark' : 'Add bookmark';
+  bookmarkDeleteBtn.hidden = !bookmark;
   bookmarkTitle.value = bookmark?.title || '';
   bookmarkUrl.value = bookmark?.url || '';
   bookmarkNewGroup.value = '';
@@ -347,6 +346,18 @@ bookmarkForm.addEventListener('submit', event => {
   saveState();
   bookmarkDialog.close();
   render();
+});
+
+bookmarkDeleteBtn.addEventListener('click', () => {
+  if (!editBookmarkId) return;
+  for (const group of state.groups) {
+    if (group.bookmarks.some(bookmark => bookmark.id === editBookmarkId)) {
+      const before = group.bookmarks.length;
+      deleteBookmark(group.id, editBookmarkId);
+      if (group.bookmarks.length < before) bookmarkDialog.close();
+      return;
+    }
+  }
 });
 
 function openGroupDialog(groupId = null) {
@@ -496,7 +507,7 @@ function clearBookmarkDropIndicators() {
 
 function setupBookmarkDrag(row) {
   row.addEventListener('dragstart', event => {
-    if (!editing || searchInput.value.trim()) return event.preventDefault();
+    if (!editing || searchInput.value.trim() || !event.target.closest('.bookmark-drag-handle')) return event.preventDefault();
     event.stopPropagation();
     dragPayload = {
       type: 'bookmark',

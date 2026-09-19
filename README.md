@@ -1,8 +1,8 @@
-# Launchpad v0.2.7
+# Launchpad v0.2.8
 
 A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
-## Included in v0.2.7
+## Included in v0.2.8
 
 - Responsive bookmark groups
 - Add, edit and delete groups
@@ -22,12 +22,14 @@ A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and J
 - Visible version number
 - No npm, build process or local development environment required
 
-## What changed in v0.2.7
+## What changed in v0.2.8
 
-- Thinner, low-contrast scrollbars for bookmark lists on desktop
-- A thinner, subtler horizontal board scrollbar
-- Scrollbar tracks are transparent
-- Scrollbar thumbs become slightly more visible on hover
+- Bookmark rows become discrete, lightly bordered items in Edit mode
+- Added a six-dot drag handle to the left of each bookmark in Edit mode
+- Bookmark dragging now starts from the drag handle
+- Simplified each Edit-mode row to drag handle, favicon, title, and Edit
+- Moved bookmark deletion into the bookmark Edit dialog
+- Normal mode remains visually clean and unchanged
 
 ## Bookmark import
 
@@ -42,6 +44,10 @@ Enter **Edit** mode and choose **Add → Bookmark**, or use **+ Add bookmark** a
 Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files in the `launchpad` repository with these files and commit the changes to `main`.
 
 ## Version history
+
+### v0.2.7
+
+- Added thinner, low-contrast scrollbars
 
 ### v0.2.5
 

@@ -295,6 +295,57 @@ main { padding: 26px 24px 72px; }
 }
 
 .bookmark-actions { display: flex; gap: 4px; padding-right: 6px; }
+
+/* Edit-mode bookmark rows: discrete, draggable items without adding bulk in normal mode. */
+.bookmark-drag-handle {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 22px;
+  margin-left: 7px;
+  align-items: center;
+  justify-content: center;
+  grid-template-columns: repeat(2, 3px);
+  grid-template-rows: repeat(3, 3px);
+  gap: 3px;
+  color: var(--muted);
+  opacity: .58;
+  cursor: grab;
+  user-select: none;
+}
+.bookmark-drag-handle span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.bookmark-drag-handle:active { cursor: grabbing; }
+
+body.editing .bookmark-row {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 96%, var(--text) 4%);
+  min-height: 44px;
+}
+body.editing .bookmark-row:hover {
+  background: var(--hover);
+}
+body.editing .bookmark-link {
+  padding-left: 2px;
+}
+body.editing .bookmark-drag-handle {
+  display: grid;
+}
+body.editing .bookmark-row { cursor: default; }
+body.editing .bookmark-row:active { cursor: default; }
+body.editing .bookmark-actions { padding-right: 6px; }
+body.editing .bookmark-edit {
+  background: transparent;
+}
+body.editing .bookmark-edit:hover {
+  background: var(--panel);
+}
+.bookmark-dialog-actions { align-items: center; }
+.dialog-action-spacer { flex: 1; }
+.bookmark-dialog-delete { margin-right: auto; }
 .add-bookmark {
   width: 100%;
   margin-top: 8px;
@@ -305,8 +356,8 @@ main { padding: 26px 24px 72px; }
 
 .edit-only { display: none; }
 body.editing .edit-only { display: flex; }
-body.editing .group-card, body.editing .bookmark-row { cursor: grab; }
-body.editing .group-card:active, body.editing .bookmark-row:active { cursor: grabbing; }
+body.editing .group-card { cursor: grab; }
+body.editing .group-card:active { cursor: grabbing; }
 
 .appearance-panel {
   position: fixed;
@@ -487,3 +538,6 @@ body.editing .group-card:active, body.editing .bookmark-row:active { cursor: gra
   .version-label { left: 10px; bottom: 8px; }
   .toast { bottom: 14px; }
 }
+
+/* Keep the six-dot handle as a 2 × 3 grid after the generic edit-only rule. */
+body.editing .bookmark-drag-handle { display: grid; }
