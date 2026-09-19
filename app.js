@@ -70,6 +70,7 @@ const bookmarkTemplate = document.querySelector('#bookmarkTemplate');
 applyTheme(localStorage.getItem(THEME_KEY) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 applyFont(localStorage.getItem(FONT_KEY) || 'system');
 applyFontSize(localStorage.getItem(FONT_SIZE_KEY) || '17');
+setupBoardGroupDrop();
 render();
 
 function loadState() {
@@ -400,19 +401,20 @@ function deleteGroup(groupId) {
 }
 
 function clearGroupDropIndicators() {
-  document.querySelectorAll('.group-card.drop-before, .group-card.drop-after').forEach(el => {
-    el.classList.remove('drop-before', 'drop-after');
-    delete el.dataset.dropPosition;
+  document.querySelectorAll('.group-card.group-drop-target').forEach(el => {
+    el.classList.remove('group-drop-target');
   });
+  board.classList.remove('group-drop-end');
 }
 
 function setupGroupDrag(node) {
   node.addEventListener('dragstart', event => {
     if (!editing || searchInput.value.trim()) return event.preventDefault();
-    if (event.target.closest('.bookmark-row')) return event.preventDefault();
+    if (event.target.closest('.bookmark-row, button, a, input, select')) return event.preventDefault();
     dragPayload = { type: 'group', groupId: node.dataset.groupId };
     node.classList.add('dragging');
     event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', node.dataset.groupId);
   });
 
   node.addEventListener('dragend', () => {
@@ -425,42 +427,58 @@ function setupGroupDrag(node) {
   node.addEventListener('dragover', event => {
     if (dragPayload?.type !== 'group' || dragPayload.groupId === node.dataset.groupId) return;
     event.preventDefault();
-
-    const rect = node.getBoundingClientRect();
-    const singleColumn = board.getBoundingClientRect().width < 520;
-    const after = singleColumn
-      ? event.clientY >= rect.top + rect.height / 2
-      : event.clientX >= rect.left + rect.width / 2;
-
+    event.stopPropagation();
     clearGroupDropIndicators();
-    node.dataset.dropPosition = after ? 'after' : 'before';
-    node.classList.add(after ? 'drop-after' : 'drop-before');
+    node.classList.add('group-drop-target');
   });
 
   node.addEventListener('dragleave', event => {
     if (event.relatedTarget && node.contains(event.relatedTarget)) return;
-    node.classList.remove('drop-before', 'drop-after');
-    delete node.dataset.dropPosition;
+    node.classList.remove('group-drop-target');
   });
 
   node.addEventListener('drop', event => {
     if (dragPayload?.type !== 'group') return;
     event.preventDefault();
+    event.stopPropagation();
+    node.classList.remove('group-drop-target');
 
-    const position = node.dataset.dropPosition || 'before';
-    const draggedId = dragPayload.groupId;
-    const targetId = node.dataset.groupId;
-    clearGroupDropIndicators();
-
-    const fromIndex = state.groups.findIndex(g => g.id === draggedId);
-    if (fromIndex < 0 || draggedId === targetId) return;
+    const fromIndex = state.groups.findIndex(g => g.id === dragPayload.groupId);
+    const toIndex = state.groups.findIndex(g => g.id === node.dataset.groupId);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
 
     const [moved] = state.groups.splice(fromIndex, 1);
-    const targetIndex = state.groups.findIndex(g => g.id === targetId);
-    if (targetIndex < 0) return;
+    const adjustedIndex = state.groups.findIndex(g => g.id === node.dataset.groupId);
+    state.groups.splice(adjustedIndex, 0, moved);
+    saveState();
+    render();
+  });
+}
 
-    const insertIndex = targetIndex + (position === 'after' ? 1 : 0);
-    state.groups.splice(insertIndex, 0, moved);
+function setupBoardGroupDrop() {
+  board.addEventListener('dragover', event => {
+    if (dragPayload?.type !== 'group') return;
+    if (event.target.closest('.group-card')) return;
+    event.preventDefault();
+    clearGroupDropIndicators();
+    board.classList.add('group-drop-end');
+  });
+
+  board.addEventListener('dragleave', event => {
+    if (event.relatedTarget && board.contains(event.relatedTarget)) return;
+    board.classList.remove('group-drop-end');
+  });
+
+  board.addEventListener('drop', event => {
+    if (dragPayload?.type !== 'group') return;
+    if (event.target.closest('.group-card')) return;
+    event.preventDefault();
+    board.classList.remove('group-drop-end');
+
+    const fromIndex = state.groups.findIndex(g => g.id === dragPayload.groupId);
+    if (fromIndex < 0) return;
+    const [moved] = state.groups.splice(fromIndex, 1);
+    state.groups.push(moved);
     saveState();
     render();
   });
