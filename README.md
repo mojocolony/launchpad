@@ -1,8 +1,8 @@
-# Launchpad v0.2.3
+# Launchpad v0.2.4
 
 A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
-## Included in v0.2.3
+## Included in v0.2.4
 
 - Responsive bookmark groups
 - Add, edit and delete groups
@@ -21,15 +21,14 @@ A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and J
 - Visible version number
 - No npm, build process or local development environment required
 
-## What changed in v0.2.3
+## What changed in v0.2.4
 
-- Increased the font-size range from 13–18 px to **16–24 px**.
-- Increased the default content size to **17 px**.
-- Group headings now scale with the selected font size.
-- Retains the v0.2.1 toolbar alignment fixes.
-- Retains the v0.2.1 **Add** menu for manually creating bookmarks or groups.
-- Retains the v0.2.1 direct import flow: clicking **Import** opens the browser file picker and imports the selected bookmark HTML file immediately.
-- Existing stored bookmarks remain under the same LocalStorage key.
+- Desktop groups are now **320 px wide**, giving bookmark titles substantially more room.
+- Desktop groups stay in **one horizontal row** instead of wrapping to a second grid row.
+- When there are more groups than fit on screen, the board scrolls horizontally.
+- Mobile remains a normal single-column layout.
+- Group reordering keeps the v0.2.3 before/after insertion-line feedback.
+- Existing bookmarks and appearance settings remain under the same LocalStorage key.
 
 ## Bookmark import
 
@@ -51,8 +50,17 @@ Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files
 
 ## Version history
 
+### v0.2.4
+
+- Widened desktop group cards to 320 px
+- Prevented desktop groups from wrapping onto a second row
+- Added horizontal board scrolling for additional groups
+- Preserved single-column mobile layout
+- Retained insertion-line group drag feedback
+
 ### v0.2.3
 
+- Changed group reordering to a before/after insertion line instead of whole-card highlighting
 - Increased content font-size range to 16–24 px
 - Set a larger 17 px default
 - Made group headings scale with the selected content size
@@ -83,7 +91,3 @@ Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files
 - Added font-size selector
 - Added persistent appearance preferences
 - Added visible version number
-
-
-### v0.2.3
-- Group reordering now uses a before/after insertion line instead of highlighting the whole destination card.
