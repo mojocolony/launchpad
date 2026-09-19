@@ -399,6 +399,13 @@ function deleteGroup(groupId) {
   render();
 }
 
+function clearGroupDropIndicators() {
+  document.querySelectorAll('.group-card.drop-before, .group-card.drop-after').forEach(el => {
+    el.classList.remove('drop-before', 'drop-after');
+    delete el.dataset.dropPosition;
+  });
+}
+
 function setupGroupDrag(node) {
   node.addEventListener('dragstart', event => {
     if (!editing || searchInput.value.trim()) return event.preventDefault();
@@ -410,6 +417,7 @@ function setupGroupDrag(node) {
 
   node.addEventListener('dragend', () => {
     node.classList.remove('dragging');
+    clearGroupDropIndicators();
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
     dragPayload = null;
   });
@@ -417,20 +425,42 @@ function setupGroupDrag(node) {
   node.addEventListener('dragover', event => {
     if (dragPayload?.type !== 'group' || dragPayload.groupId === node.dataset.groupId) return;
     event.preventDefault();
-    node.classList.add('drag-over');
+
+    const rect = node.getBoundingClientRect();
+    const singleColumn = board.getBoundingClientRect().width < 520;
+    const after = singleColumn
+      ? event.clientY >= rect.top + rect.height / 2
+      : event.clientX >= rect.left + rect.width / 2;
+
+    clearGroupDropIndicators();
+    node.dataset.dropPosition = after ? 'after' : 'before';
+    node.classList.add(after ? 'drop-after' : 'drop-before');
   });
 
-  node.addEventListener('dragleave', () => node.classList.remove('drag-over'));
+  node.addEventListener('dragleave', event => {
+    if (event.relatedTarget && node.contains(event.relatedTarget)) return;
+    node.classList.remove('drop-before', 'drop-after');
+    delete node.dataset.dropPosition;
+  });
 
   node.addEventListener('drop', event => {
     if (dragPayload?.type !== 'group') return;
     event.preventDefault();
-    node.classList.remove('drag-over');
-    const fromIndex = state.groups.findIndex(g => g.id === dragPayload.groupId);
-    const toIndex = state.groups.findIndex(g => g.id === node.dataset.groupId);
-    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+
+    const position = node.dataset.dropPosition || 'before';
+    const draggedId = dragPayload.groupId;
+    const targetId = node.dataset.groupId;
+    clearGroupDropIndicators();
+
+    const fromIndex = state.groups.findIndex(g => g.id === draggedId);
+    if (fromIndex < 0 || draggedId === targetId) return;
+
     const [moved] = state.groups.splice(fromIndex, 1);
-    state.groups.splice(toIndex, 0, moved);
+    const targetIndex = state.groups.findIndex(g => g.id === targetId);
+    if (targetIndex < 0) return;
+
+    const insertIndex = targetIndex + (position === 'after' ? 1 : 0);
+    state.groups.splice(insertIndex, 0, moved);
     saveState();
     render();
   });

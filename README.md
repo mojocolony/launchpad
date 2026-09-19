@@ -1,8 +1,8 @@
-# Launchpad v0.2.2
+# Launchpad v0.2.3
 
 A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
-## Included in v0.2.2
+## Included in v0.2.3
 
 - Responsive bookmark groups
 - Add, edit and delete groups
@@ -21,7 +21,7 @@ A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and J
 - Visible version number
 - No npm, build process or local development environment required
 
-## What changed in v0.2.2
+## What changed in v0.2.3
 
 - Increased the font-size range from 13–18 px to **16–24 px**.
 - Increased the default content size to **17 px**.
@@ -51,7 +51,7 @@ Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files
 
 ## Version history
 
-### v0.2.2
+### v0.2.3
 
 - Increased content font-size range to 16–24 px
 - Set a larger 17 px default
@@ -83,3 +83,7 @@ Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files
 - Added font-size selector
 - Added persistent appearance preferences
 - Added visible version number
+
+
+### v0.2.3
+- Group reordering now uses a before/after insertion line instead of highlighting the whole destination card.

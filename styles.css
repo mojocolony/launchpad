@@ -129,7 +129,34 @@ main { padding: 26px 24px 72px; }
 }
 
 .group-card.dragging, .bookmark-row.dragging { opacity: .45; }
-.group-card.drag-over, .bookmark-list.drag-over { outline: 2px solid var(--text); outline-offset: 3px; }
+.bookmark-list.drag-over { outline: 2px solid var(--text); outline-offset: 3px; }
+
+.group-card.drop-before, .group-card.drop-after { position: relative; }
+.group-card.drop-before::before, .group-card.drop-after::after {
+  content: '';
+  position: absolute;
+  z-index: 4;
+  top: -5px;
+  bottom: -5px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--text);
+}
+.group-card.drop-before::before { left: -11px; }
+.group-card.drop-after::after { right: -11px; }
+
+@media (max-width: 559px) {
+  .group-card.drop-before::before, .group-card.drop-after::after {
+    left: -4px;
+    right: -4px;
+    width: auto;
+    height: 3px;
+    top: auto;
+    bottom: auto;
+  }
+  .group-card.drop-before::before { top: -11px; }
+  .group-card.drop-after::after { bottom: -11px; }
+}
 
 .group-header {
   display: flex;
