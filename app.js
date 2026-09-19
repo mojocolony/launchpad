@@ -34,6 +34,7 @@ let editing = false;
 let editBookmarkId = null;
 let editGroupId = null;
 let dragPayload = null;
+let pendingImport = null;
 
 const board = document.querySelector('#board');
 const emptyState = document.querySelector('#emptyState');
@@ -45,6 +46,13 @@ const appearancePanel = document.querySelector('#appearancePanel');
 const fontSelect = document.querySelector('#fontSelect');
 const fontSizeSelect = document.querySelector('#fontSizeSelect');
 const addGroupBtn = document.querySelector('#addGroupBtn');
+const importBtn = document.querySelector('#importBtn');
+const importDialog = document.querySelector('#importDialog');
+const importForm = document.querySelector('#importForm');
+const importFile = document.querySelector('#importFile');
+const importPreview = document.querySelector('#importPreview');
+const importResult = document.querySelector('#importResult');
+const importSubmitBtn = document.querySelector('#importSubmitBtn');
 const bookmarkDialog = document.querySelector('#bookmarkDialog');
 const bookmarkForm = document.querySelector('#bookmarkForm');
 const bookmarkDialogTitle = document.querySelector('#bookmarkDialogTitle');
@@ -154,12 +162,16 @@ function setEditing(value) {
   editBtn.classList.toggle('active', editing);
   editBtn.textContent = editing ? 'Done' : 'Edit';
   addGroupBtn.hidden = !editing;
+  importBtn.hidden = !editing;
   render();
 }
 
 editBtn.addEventListener('click', () => setEditing(!editing));
 searchInput.addEventListener('input', render);
 addGroupBtn.addEventListener('click', () => openGroupDialog());
+importBtn.addEventListener('click', openImportDialog);
+importFile.addEventListener('change', prepareImport);
+importForm.addEventListener('submit', performImport);
 
 themeBtn.addEventListener('click', () => {
   const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -421,6 +433,202 @@ function moveBookmark(payload, targetGroupId, beforeBookmarkId) {
 
   saveState();
   render();
+}
+
+
+function openImportDialog() {
+  pendingImport = null;
+  importForm.reset();
+  importPreview.hidden = true;
+  importPreview.textContent = '';
+  importResult.hidden = true;
+  importResult.textContent = '';
+  importSubmitBtn.disabled = true;
+  importFile.disabled = false;
+  importDialog.showModal();
+}
+
+async function prepareImport() {
+  pendingImport = null;
+  importPreview.hidden = true;
+  importResult.hidden = true;
+  importSubmitBtn.disabled = true;
+
+  const file = importFile.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const parsed = parseBookmarkHtml(text);
+    const plan = buildImportPlan(parsed);
+    pendingImport = plan;
+
+    if (plan.additions.length === 0) {
+      const details = [];
+      if (plan.duplicates) details.push(`${plan.duplicates} duplicate${plan.duplicates === 1 ? '' : 's'}`);
+      if (plan.ignored) details.push(`${plan.ignored} unsupported or invalid link${plan.ignored === 1 ? '' : 's'}`);
+      importPreview.textContent = details.length
+        ? `No new bookmarks to import. ${details.join(' and ')} found.`
+        : 'No bookmarks were found in this file.';
+      importPreview.hidden = false;
+      return;
+    }
+
+    const groupCount = new Set(plan.additions.map(item => item.groupName)).size;
+    const details = [`${plan.additions.length} new bookmark${plan.additions.length === 1 ? '' : 's'}`, `${groupCount} group${groupCount === 1 ? '' : 's'}`];
+    if (plan.duplicates) details.push(`${plan.duplicates} duplicate${plan.duplicates === 1 ? '' : 's'} skipped`);
+    if (plan.ignored) details.push(`${plan.ignored} unsupported or invalid link${plan.ignored === 1 ? '' : 's'} ignored`);
+    importPreview.textContent = `Ready to import ${details.join(', ')}.`;
+    importPreview.hidden = false;
+    importSubmitBtn.disabled = false;
+  } catch (error) {
+    importPreview.textContent = 'Launchpad could not read this bookmark file.';
+    importPreview.hidden = false;
+  }
+}
+
+function performImport(event) {
+  if (event.submitter?.value !== 'import') return;
+  event.preventDefault();
+  if (!pendingImport?.additions?.length) return;
+
+  const groupsByName = new Map(
+    state.groups.map(group => [group.name.trim().toLocaleLowerCase(), group])
+  );
+
+  pendingImport.additions.forEach(item => {
+    const key = item.groupName.trim().toLocaleLowerCase();
+    let group = groupsByName.get(key);
+    if (!group) {
+      group = { id: makeId(), name: item.groupName, bookmarks: [] };
+      state.groups.push(group);
+      groupsByName.set(key, group);
+    }
+    group.bookmarks.push({ id: makeId(), title: item.title, url: item.url });
+  });
+
+  saveState();
+  render();
+
+  const imported = pendingImport.additions.length;
+  const skipped = pendingImport.duplicates;
+  const ignored = pendingImport.ignored;
+  const summary = [`Imported ${imported} bookmark${imported === 1 ? '' : 's'}.`];
+  if (skipped) summary.push(`Skipped ${skipped} duplicate${skipped === 1 ? '' : 's'}.`);
+  if (ignored) summary.push(`Ignored ${ignored} unsupported or invalid link${ignored === 1 ? '' : 's'}.`);
+  importResult.textContent = summary.join(' ');
+  importResult.hidden = false;
+  importPreview.hidden = true;
+  importSubmitBtn.disabled = true;
+  importFile.disabled = true;
+  pendingImport = null;
+}
+
+function parseBookmarkHtml(html) {
+  const tokenPattern = /<DL\b[^>]*>|<\/DL\s*>|<H3\b[^>]*>[\s\S]*?<\/H3\s*>|<A\b[^>]*>[\s\S]*?<\/A\s*>/gi;
+  const tokens = html.match(tokenPattern) || [];
+  const stack = [];
+  const bookmarks = [];
+  let pendingFolder = null;
+  let ignored = 0;
+
+  for (const token of tokens) {
+    if (/^<H3\b/i.test(token)) {
+      pendingFolder = textFromHtmlToken(token, 'h3') || 'Untitled';
+      continue;
+    }
+
+    if (/^<DL\b/i.test(token)) {
+      stack.push(pendingFolder);
+      pendingFolder = null;
+      continue;
+    }
+
+    if (/^<\/DL/i.test(token)) {
+      stack.pop();
+      continue;
+    }
+
+    if (/^<A\b/i.test(token)) {
+      const parsed = anchorFromHtmlToken(token);
+      if (!parsed) {
+        ignored += 1;
+        continue;
+      }
+      const url = canonicalHttpUrl(parsed.url);
+      if (!url) {
+        ignored += 1;
+        continue;
+      }
+      const path = stack.filter(Boolean);
+      const groupName = path.length ? path.join(' › ') : 'Imported';
+      bookmarks.push({
+        groupName,
+        title: parsed.title || titleFromUrl(url),
+        url
+      });
+    }
+  }
+
+  return { bookmarks, ignored };
+}
+
+function buildImportPlan(parsed) {
+  const seen = new Set();
+  state.groups.forEach(group => {
+    group.bookmarks.forEach(bookmark => {
+      const canonical = canonicalHttpUrl(bookmark.url);
+      if (canonical) seen.add(canonical);
+    });
+  });
+
+  const additions = [];
+  let duplicates = 0;
+
+  parsed.bookmarks.forEach(bookmark => {
+    if (seen.has(bookmark.url)) {
+      duplicates += 1;
+      return;
+    }
+    seen.add(bookmark.url);
+    additions.push(bookmark);
+  });
+
+  return { additions, duplicates, ignored: parsed.ignored };
+}
+
+function textFromHtmlToken(token, selector) {
+  const doc = new DOMParser().parseFromString(token, 'text/html');
+  return doc.querySelector(selector)?.textContent?.trim() || '';
+}
+
+function anchorFromHtmlToken(token) {
+  const doc = new DOMParser().parseFromString(token, 'text/html');
+  const anchor = doc.querySelector('a[href]');
+  if (!anchor) return null;
+  return {
+    url: anchor.getAttribute('href')?.trim() || '',
+    title: anchor.textContent?.trim() || ''
+  };
+}
+
+function canonicalHttpUrl(value) {
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+function titleFromUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.hostname.replace(/^www\./, '') || value;
+  } catch {
+    return value;
+  }
 }
 
 window.addEventListener('keydown', event => {

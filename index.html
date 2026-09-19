@@ -20,6 +20,7 @@
       </label>
       <button id="appearanceBtn" class="icon-btn" title="Appearance" aria-label="Appearance" aria-expanded="false">Aa</button>
       <button id="themeBtn" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">◐</button>
+      <button id="importBtn" class="text-btn edit-only topbar-edit-only" hidden>Import</button>
       <button id="editBtn" class="text-btn">Edit</button>
     </div>
   </header>
@@ -56,7 +57,28 @@
   </section>
 
   <button id="addGroupBtn" class="floating-btn" hidden>+ Group</button>
-  <div id="versionLabel" class="version-label" aria-label="App version">v0.1.2</div>
+  <div id="versionLabel" class="version-label" aria-label="App version">v0.2.0</div>
+
+
+  <dialog id="importDialog" class="dialog">
+    <form id="importForm" method="dialog">
+      <div class="dialog-head">
+        <h2>Import bookmarks</h2>
+        <button type="button" class="close-btn" data-close="importDialog" aria-label="Close">×</button>
+      </div>
+      <p class="dialog-copy">Choose a standard HTML bookmark export from Safari, Chrome, Firefox, Edge, or another browser. Existing bookmarks are kept and matching URLs are skipped.</p>
+      <label>
+        <span>Bookmark file</span>
+        <input id="importFile" type="file" accept=".html,.htm,text/html" required />
+      </label>
+      <div id="importPreview" class="import-preview" hidden></div>
+      <div id="importResult" class="import-result" hidden></div>
+      <div class="dialog-actions">
+        <button type="button" class="secondary-btn" data-close="importDialog">Cancel</button>
+        <button id="importSubmitBtn" class="primary-btn" value="import" disabled>Import</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="bookmarkDialog" class="dialog">
     <form id="bookmarkForm" method="dialog">
