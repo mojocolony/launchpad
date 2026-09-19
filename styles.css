@@ -541,3 +541,176 @@ body.editing .group-card:active { cursor: grabbing; }
 
 /* Keep the six-dot handle as a 2 × 3 grid after the generic edit-only rule. */
 body.editing .bookmark-drag-handle { display: grid; }
+
+/* v0.3.0: one level of collapsible subfolders inside each card. */
+.card-scroll {
+  min-height: 8px;
+}
+
+@media (min-width: 761px) {
+  .card-scroll {
+    max-height: calc((var(--bookmark-font-size) + 25px) * 15 + 86px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text) 16%, transparent) transparent;
+    padding-right: 3px;
+  }
+  .card-scroll::-webkit-scrollbar { width: 5px; }
+  .card-scroll::-webkit-scrollbar-track { background: transparent; }
+  .card-scroll::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text) 16%, transparent);
+    border-radius: 999px;
+  }
+  .card-scroll::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--text) 32%, transparent);
+  }
+  .bookmark-list {
+    max-height: none;
+    overflow: visible;
+    scrollbar-gutter: auto;
+    padding-right: 0;
+  }
+}
+
+.subfolder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.subfolder {
+  position: relative;
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+}
+
+.subfolder-header {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  border-radius: 8px;
+}
+.subfolder-header:hover { background: var(--hover); }
+
+.subfolder-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 5px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  font-size: calc(var(--bookmark-font-size) - 1px);
+  font-weight: 650;
+}
+
+.subfolder-chevron {
+  flex: 0 0 12px;
+  width: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+.subfolder-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.subfolder-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.subfolder-content {
+  margin-left: 11px;
+  padding-left: 5px;
+  border-left: 1px solid var(--border);
+}
+.subfolder-content[hidden] { display: none; }
+
+.subfolder-edit {
+  margin-right: 4px;
+  padding: 5px 7px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.subfolder-drag-handle {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 22px;
+  margin-left: 5px;
+  align-items: center;
+  justify-content: center;
+  grid-template-columns: repeat(2, 3px);
+  grid-template-rows: repeat(3, 3px);
+  gap: 3px;
+  color: var(--muted);
+  opacity: .58;
+  cursor: grab;
+  user-select: none;
+}
+.subfolder-drag-handle span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+}
+body.editing .subfolder-drag-handle { display: grid; }
+
+.card-edit-footer {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 8px;
+}
+body.editing .card-edit-footer { display: grid; }
+.card-edit-footer button {
+  width: 100%;
+  padding: 9px 7px;
+  color: var(--muted);
+  border-style: dashed;
+  font-size: 12px;
+}
+.card-edit-footer .add-bookmark { margin-top: 0; }
+
+.subfolder.folder-drop-before::before,
+.subfolder.folder-drop-after::after {
+  content: '';
+  position: absolute;
+  z-index: 6;
+  left: 5px;
+  right: 5px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--text);
+  pointer-events: none;
+}
+.subfolder.folder-drop-before::before { top: -3px; }
+.subfolder.folder-drop-after::after { bottom: -3px; }
+.subfolder-list.folder-drop-end::after {
+  content: '';
+  display: block;
+  height: 3px;
+  margin: 5px;
+  border-radius: 3px;
+  background: var(--text);
+}
+.subfolder-header.bookmark-folder-drop-target {
+  outline: 1px solid color-mix(in srgb, var(--text) 45%, transparent);
+  outline-offset: -1px;
+  background: var(--hover);
+}
+
+@media (max-width: 760px) {
+  .card-scroll { overflow: visible; max-height: none; }
+}
