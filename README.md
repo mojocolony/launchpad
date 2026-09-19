@@ -1,7 +1,7 @@
-# Launchpad v0.3.2
+# Launchpad v0.3.3
 
 
-## v0.3.2
+## v0.3.3
 
 - Fixed subfolder reordering: drag a subfolder by its header in Edit mode.
 - Preserves each card’s internal scroll position after bookmark, subfolder, or card drag-and-drop operations.
@@ -53,7 +53,7 @@ Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files
 Existing bookmarks and settings remain compatible with v0.2.10. The data model is upgraded in place by adding an empty `folders` array to existing cards when needed.
 
 
-## v0.3.2
+## v0.3.3
 
 - Fixes subfolder reordering: drag a subfolder by its six-dot handle in Edit mode.
 - Retains scroll-position preservation during drag-and-drop.

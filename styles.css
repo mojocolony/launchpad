@@ -714,3 +714,6 @@ body.editing .card-edit-footer { display: grid; }
 @media (max-width: 760px) {
   .card-scroll { overflow: visible; max-height: none; }
 }
+
+/* v0.3.3: explicit subfolder drag handle interaction */
+.subfolder-drag-handle:active { cursor: grabbing; }

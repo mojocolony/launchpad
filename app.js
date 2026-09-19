@@ -903,13 +903,18 @@ function clearFolderDropIndicators() {
 
 function setupFolderDrag(folderNode) {
   const handle = folderNode.querySelector('.subfolder-drag-handle');
-  // Match bookmark dragging: the six-dot handle is the draggable element,
-  // while the folder container receives the bubbled drag events.
   folderNode.draggable = false;
-  if (handle) handle.draggable = editing && !searchInput.value.trim();
+  if (!handle) return;
 
-  folderNode.addEventListener('dragstart', event => {
-    if (!editing || searchInput.value.trim() || !event.target.closest('.subfolder-drag-handle')) return event.preventDefault();
+  // The handle owns the drag directly. This avoids relying on a dragstart
+  // event bubbling through the folder and competing with the draggable card.
+  handle.draggable = editing && !searchInput.value.trim();
+
+  handle.addEventListener('dragstart', event => {
+    if (!editing || searchInput.value.trim()) {
+      event.preventDefault();
+      return;
+    }
     event.stopPropagation();
     dragPayload = { type: 'folder', groupId: folderNode.dataset.groupId, folderId: folderNode.dataset.folderId };
     folderNode.classList.add('dragging');
@@ -917,7 +922,7 @@ function setupFolderDrag(folderNode) {
     event.dataTransfer.setData('text/plain', folderNode.dataset.folderId);
   });
 
-  folderNode.addEventListener('dragend', event => {
+  handle.addEventListener('dragend', event => {
     event.stopPropagation();
     folderNode.classList.remove('dragging');
     clearFolderDropIndicators();
