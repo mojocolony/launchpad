@@ -1,8 +1,8 @@
-# Launchpad v0.2.8
+# Launchpad v0.2.9
 
 A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
-## Included in v0.2.8
+## Included in v0.2.9
 
 - Responsive bookmark groups
 - Add, edit and delete groups
@@ -22,14 +22,12 @@ A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and J
 - Visible version number
 - No npm, build process or local development environment required
 
-## What changed in v0.2.8
+## What changed in v0.2.9
 
-- Bookmark rows become discrete, lightly bordered items in Edit mode
-- Added a six-dot drag handle to the left of each bookmark in Edit mode
-- Bookmark dragging now starts from the drag handle
-- Simplified each Edit-mode row to drag handle, favicon, title, and Edit
-- Moved bookmark deletion into the bookmark Edit dialog
-- Normal mode remains visually clean and unchanged
+- The **+ Add bookmark** control at the bottom of a card is now scoped to that card
+- Card-level bookmark creation no longer offers unrelated groups or new-group creation
+- The main **Add → Bookmark** command remains global and can target any group or create a new group
+- This prepares the interaction model for future foldable subfolders, where a card-level Add can offer only folders within that card
 
 ## Bookmark import
 
@@ -37,13 +35,18 @@ Enter **Edit** mode and choose **Import**. Select a standard HTML bookmark expor
 
 ## Manual bookmark entry
 
-Enter **Edit** mode and choose **Add → Bookmark**, or use **+ Add bookmark** at the bottom of an existing group.
+Enter **Edit** mode and choose **Add → Bookmark** to add anywhere, or use **+ Add bookmark** at the bottom of a group to add directly to that group.
 
 ## Deploy to GitHub Pages
 
 Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files in the `launchpad` repository with these files and commit the changes to `main`.
 
 ## Version history
+
+### v0.2.8
+
+- Added discrete Edit-mode bookmark rows with six-dot drag handles
+- Moved bookmark deletion into the Edit dialog
 
 ### v0.2.7
 

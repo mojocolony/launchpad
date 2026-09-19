@@ -35,6 +35,7 @@ let editBookmarkId = null;
 let editGroupId = null;
 let dragPayload = null;
 let pendingImport = null;
+let bookmarkDialogScopeGroupId = null;
 
 const board = document.querySelector('#board');
 const emptyState = document.querySelector('#emptyState');
@@ -58,6 +59,7 @@ const bookmarkDialogTitle = document.querySelector('#bookmarkDialogTitle');
 const bookmarkTitle = document.querySelector('#bookmarkTitle');
 const bookmarkUrl = document.querySelector('#bookmarkUrl');
 const bookmarkGroup = document.querySelector('#bookmarkGroup');
+const bookmarkGroupWrap = document.querySelector('#bookmarkGroupWrap');
 const bookmarkNewGroupWrap = document.querySelector('#bookmarkNewGroupWrap');
 const bookmarkNewGroup = document.querySelector('#bookmarkNewGroup');
 const bookmarkDeleteBtn = document.querySelector('#bookmarkDeleteBtn');
@@ -144,7 +146,7 @@ function render() {
       list.appendChild(row);
     });
 
-    groupNode.querySelector('.add-bookmark').addEventListener('click', () => openBookmarkDialog(group.id));
+    groupNode.querySelector('.add-bookmark').addEventListener('click', () => openBookmarkDialog(group.id, null, { local: true }));
     groupNode.querySelector('.rename-group').addEventListener('click', () => openGroupDialog(group.id));
     groupNode.querySelector('.delete-group').addEventListener('click', () => deleteGroup(group.id));
 
@@ -288,16 +290,33 @@ function updateNewGroupField() {
 
 bookmarkGroup.addEventListener('change', updateNewGroupField);
 
-function openBookmarkDialog(groupId, bookmarkId = null) {
+function openBookmarkDialog(groupId, bookmarkId = null, options = {}) {
   editBookmarkId = bookmarkId;
   const group = groupId ? state.groups.find(g => g.id === groupId) : null;
   const bookmark = bookmarkId ? group?.bookmarks.find(b => b.id === bookmarkId) : null;
-  bookmarkDialogTitle.textContent = bookmark ? 'Edit bookmark' : 'Add bookmark';
+  const localAdd = Boolean(options.local && !bookmark && group);
+
+  bookmarkDialogScopeGroupId = localAdd ? group.id : null;
+  bookmarkDialogTitle.textContent = bookmark
+    ? 'Edit bookmark'
+    : localAdd
+      ? `Add bookmark to ${group.name}`
+      : 'Add bookmark';
   bookmarkDeleteBtn.hidden = !bookmark;
   bookmarkTitle.value = bookmark?.title || '';
   bookmarkUrl.value = bookmark?.url || '';
   bookmarkNewGroup.value = '';
   populateGroupSelect(groupId);
+
+  // A card-level Add is intentionally local. The global Add menu remains the
+  // place for choosing any group (or creating a new one).
+  bookmarkGroupWrap.hidden = localAdd;
+  if (localAdd) {
+    bookmarkGroup.value = group.id;
+    bookmarkNewGroupWrap.hidden = true;
+    bookmarkNewGroup.required = false;
+  }
+
   bookmarkDialog.showModal();
   setTimeout(() => bookmarkTitle.focus(), 0);
 }
@@ -310,8 +329,8 @@ bookmarkForm.addEventListener('submit', event => {
   const url = normalizedUrl(bookmarkUrl.value);
   if (!title || !url) return;
 
-  let targetGroupId = bookmarkGroup.value;
-  if (targetGroupId === '__new__') {
+  let targetGroupId = bookmarkDialogScopeGroupId || bookmarkGroup.value;
+  if (!bookmarkDialogScopeGroupId && targetGroupId === '__new__') {
     const newName = bookmarkNewGroup.value.trim();
     if (!newName) {
       bookmarkNewGroup.focus();
