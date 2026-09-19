@@ -212,7 +212,27 @@ function renderBookmarkRow(bookmark, groupId, folderId, list) {
   list.appendChild(row);
 }
 
-function render() {
+function captureScrollState() {
+  const cards = new Map();
+  board.querySelectorAll('.group-card[data-group-id]').forEach(card => {
+    const scroller = card.querySelector('.card-scroll');
+    if (scroller) cards.set(card.dataset.groupId, scroller.scrollTop);
+  });
+  return { boardLeft: board.scrollLeft, cards };
+}
+
+function restoreScrollState(scrollState) {
+  if (!scrollState) return;
+  board.scrollLeft = scrollState.boardLeft;
+  board.querySelectorAll('.group-card[data-group-id]').forEach(card => {
+    const scroller = card.querySelector('.card-scroll');
+    const savedTop = scrollState.cards.get(card.dataset.groupId);
+    if (scroller && typeof savedTop === 'number') scroller.scrollTop = savedTop;
+  });
+}
+
+function render({ preserveScroll = false } = {}) {
+  const scrollState = preserveScroll ? captureScrollState() : null;
   const q = searchInput.value.trim().toLowerCase();
   board.innerHTML = '';
 
@@ -304,6 +324,8 @@ function render() {
       copy.textContent = 'Choose Edit, then Add to create a bookmark or group.';
     }
   }
+
+  restoreScrollState(scrollState);
 }
 
 function setEditing(value) {
@@ -706,7 +728,7 @@ function setupGroupDrag(node) {
     const adjustedIndex = state.groups.findIndex(group => group.id === node.dataset.groupId);
     state.groups.splice(adjustedIndex, 0, moved);
     saveState();
-    render();
+    render({ preserveScroll: true });
   });
 }
 
@@ -735,7 +757,7 @@ function setupBoardGroupDrop() {
     const [moved] = state.groups.splice(fromIndex, 1);
     state.groups.push(moved);
     saveState();
-    render();
+    render({ preserveScroll: true });
   });
 }
 
@@ -868,7 +890,7 @@ function moveBookmark(payload, targetGroupId, targetFolderId = null, targetBookm
   }
 
   saveState();
-  render();
+  render({ preserveScroll: true });
 }
 
 function clearFolderDropIndicators() {
@@ -881,11 +903,13 @@ function clearFolderDropIndicators() {
 
 function setupFolderDrag(folderNode) {
   const handle = folderNode.querySelector('.subfolder-drag-handle');
-  if (!handle) return;
-  handle.draggable = editing && !searchInput.value.trim();
+  folderNode.draggable = editing && !searchInput.value.trim();
+  if (handle) handle.draggable = false;
 
-  handle.addEventListener('dragstart', event => {
+  folderNode.addEventListener('dragstart', event => {
     if (!editing || searchInput.value.trim()) return event.preventDefault();
+    // Start folder dragging from the folder header, while leaving bookmark rows and Edit controls alone.
+    if (!event.target.closest('.subfolder-header') || event.target.closest('.subfolder-edit')) return event.preventDefault();
     event.stopPropagation();
     dragPayload = { type: 'folder', groupId: folderNode.dataset.groupId, folderId: folderNode.dataset.folderId };
     folderNode.classList.add('dragging');
@@ -893,7 +917,7 @@ function setupFolderDrag(folderNode) {
     event.dataTransfer.setData('text/plain', folderNode.dataset.folderId);
   });
 
-  handle.addEventListener('dragend', event => {
+  folderNode.addEventListener('dragend', event => {
     event.stopPropagation();
     folderNode.classList.remove('dragging');
     clearFolderDropIndicators();
@@ -969,7 +993,7 @@ function moveFolder(groupId, folderId, targetFolderId = null, position = 'end') 
     }
   }
   saveState();
-  render();
+  render({ preserveScroll: true });
 }
 
 async function importSelectedFile() {

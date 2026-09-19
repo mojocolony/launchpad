@@ -1,6 +1,13 @@
-# Launchpad v0.3.0
+# Launchpad v0.3.1
 
-A lightweight bookmark start page built with plain HTML, CSS and JavaScript.
+
+## v0.3.1
+
+- Fixed subfolder reordering: drag a subfolder by its header in Edit mode.
+- Preserves each card’s internal scroll position after bookmark, subfolder, or card drag-and-drop operations.
+- Preserves the board’s horizontal scroll position during drag-and-drop reordering.
+
+A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
 ## New in v0.3.0
 
