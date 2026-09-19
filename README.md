@@ -1,8 +1,8 @@
-# Launchpad v0.2.6
+# Launchpad v0.2.7
 
 A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
-## Included in v0.2.6
+## Included in v0.2.7
 
 - Responsive bookmark groups
 - Add, edit and delete groups
@@ -22,14 +22,12 @@ A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and J
 - Visible version number
 - No npm, build process or local development environment required
 
-## What changed in v0.2.6
+## What changed in v0.2.7
 
-- Bookmark dragging now shows an explicit horizontal insertion line **above or below** the row under the pointer.
-- The insertion position follows the upper or lower half of the hovered bookmark row.
-- Moving bookmarks between groups uses the same insertion feedback.
-- Dropping in the empty area at the bottom of a group shows an end-of-list insertion line.
-- The existing v0.2.5 group dragging, 320 px desktop cards, single horizontal group row, and approximately 15-link internal card scrolling are retained.
-- Existing bookmarks and appearance settings remain under the same LocalStorage key.
+- Thinner, low-contrast scrollbars for bookmark lists on desktop
+- A thinner, subtler horizontal board scrollbar
+- Scrollbar tracks are transparent
+- Scrollbar thumbs become slightly more visible on hover
 
 ## Bookmark import
 
