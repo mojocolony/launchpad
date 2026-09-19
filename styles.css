@@ -583,7 +583,7 @@ body.editing .bookmark-drag-handle { display: grid; }
 
 .subfolder {
   position: relative;
-  border-top: 1px solid var(--border);
+  border-top: 0;
   padding-top: 4px;
 }
 
@@ -856,7 +856,7 @@ main {
 /* Root bookmarks and folders share one ordered list. */
 .subfolder {
   margin: 0;
-  border-top: 1px solid var(--border);
+  border-top: 0;
   padding-top: 4px;
 }
 .subfolder-content {
