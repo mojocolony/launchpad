@@ -742,3 +742,200 @@ body.editing .subfolder-drag-handle {
   opacity: .72;
   pointer-events: none;
 }
+
+/* v0.4.0 — responsive dashboard grid, equal-height cards, mixed root items. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 23px;
+  line-height: 1;
+}
+.brand-icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+main {
+  padding: 28px 24px 72px;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  justify-content: center;
+  align-items: start;
+  gap: 20px;
+  width: 100%;
+  max-width: 1460px;
+  margin: 0 auto;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
+.group-card {
+  width: 100%;
+  max-width: 340px;
+  justify-self: center;
+  min-width: 0;
+  height: calc((var(--bookmark-font-size) + 25px) * 10 + 122px);
+  max-height: 620px;
+  display: flex;
+  flex-direction: column;
+}
+
+.group-header {
+  flex: 0 0 auto;
+}
+
+.card-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text) 16%, transparent) transparent;
+  padding-right: 3px;
+}
+.card-scroll::-webkit-scrollbar { width: 5px; }
+.card-scroll::-webkit-scrollbar-track { background: transparent; }
+.card-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  border-radius: 999px;
+}
+.card-scroll::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text) 32%, transparent);
+}
+
+.card-items {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 100%;
+}
+
+.card-edit-footer {
+  flex: 0 0 auto;
+}
+
+.top-level-item {
+  position: relative;
+  flex: 0 0 auto;
+}
+.top-level-item.top-drop-before::before,
+.top-level-item.top-drop-after::after {
+  content: '';
+  position: absolute;
+  z-index: 8;
+  left: 7px;
+  right: 7px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--text);
+  pointer-events: none;
+}
+.top-level-item.top-drop-before::before { top: -3px; }
+.top-level-item.top-drop-after::after { bottom: -3px; }
+
+.card-items.top-drop-start::before,
+.card-items.top-drop-end::after {
+  content: '';
+  display: block;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--text);
+  pointer-events: none;
+}
+.card-items.top-drop-start::before { margin: 0 7px 4px; }
+.card-items.top-drop-end::after { margin: 5px 7px 1px; }
+
+/* Root bookmarks and folders share one ordered list. */
+.subfolder {
+  margin: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+}
+.subfolder-content {
+  margin-left: 18px;
+  padding-left: 6px;
+}
+.subfolder-bookmarks.bookmark-list {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+  scrollbar-gutter: auto;
+}
+
+/* Grid card reordering: left/right insertion on desktop. */
+.group-card.group-drop-before::before,
+.group-card.group-drop-after::after {
+  content: '';
+  position: absolute;
+  z-index: 9;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--text);
+  pointer-events: none;
+}
+.group-card.group-drop-before::before { left: -12px; }
+.group-card.group-drop-after::after { right: -12px; }
+.group-card.group-drop-before,
+.group-card.group-drop-after { position: relative; }
+
+/* v0.4.0 uses card-scroll, not individual root bookmark lists, as the card scroller. */
+@media (min-width: 761px) {
+  .bookmark-list {
+    max-height: none;
+    overflow: visible;
+    scrollbar-gutter: auto;
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    align-items: center;
+  }
+  .brand {
+    display: flex;
+    font-size: 21px;
+  }
+  .brand-icon {
+    width: 22px;
+    height: 22px;
+    flex-basis: 22px;
+  }
+  main { padding: 16px 12px 72px; }
+  .board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .group-card {
+    width: 100%;
+    max-width: none;
+    height: calc((var(--bookmark-font-size) + 25px) * 10 + 118px);
+    max-height: 600px;
+  }
+  .card-scroll {
+    overflow-y: auto;
+    max-height: none;
+  }
+  .group-card.group-drop-before::before,
+  .group-card.group-drop-after::after {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    height: 3px;
+    top: auto;
+    bottom: auto;
+  }
+  .group-card.group-drop-before::before { top: -9px; }
+  .group-card.group-drop-after::after { bottom: -9px; }
+}
