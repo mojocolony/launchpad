@@ -1,8 +1,8 @@
-# Launchpad v0.2.9
+# Launchpad v0.2.10
 
 A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
 
-## Included in v0.2.9
+## Included in v0.2.10
 
 - Responsive bookmark groups
 - Add, edit and delete groups
@@ -22,7 +22,7 @@ A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and J
 - Visible version number
 - No npm, build process or local development environment required
 
-## What changed in v0.2.9
+## What changed in v0.2.10
 
 - The **+ Add bookmark** control at the bottom of a card is now scoped to that card
 - Card-level bookmark creation no longer offers unrelated groups or new-group creation
@@ -73,3 +73,11 @@ Replace the existing `index.html`, `styles.css`, `app.js`, and `README.md` files
 - Added larger 16–24 px font-size range
 - Improved top-bar alignment
 - Added manual bookmark creation and direct bookmark import
+
+
+## v0.2.10
+
+- Fixes a blank-board regression caused by mixed cached HTML/JavaScript during deployment.
+- Makes new edit-mode elements defensive so an older cached HTML shell cannot crash rendering.
+- Adds version query strings to CSS and JavaScript asset URLs to reduce deployment cache mismatches.
+- No new data model changes; existing bookmarks and settings remain compatible.

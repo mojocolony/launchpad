@@ -129,7 +129,7 @@ function render() {
       row.dataset.groupId = group.id;
       row.draggable = false;
       const dragHandle = row.querySelector('.bookmark-drag-handle');
-      dragHandle.draggable = editing && !q;
+      if (dragHandle) dragHandle.draggable = editing && !q;
 
       const link = row.querySelector('.bookmark-link');
       link.href = bookmark.url;
@@ -302,7 +302,7 @@ function openBookmarkDialog(groupId, bookmarkId = null, options = {}) {
     : localAdd
       ? `Add bookmark to ${group.name}`
       : 'Add bookmark';
-  bookmarkDeleteBtn.hidden = !bookmark;
+  if (bookmarkDeleteBtn) bookmarkDeleteBtn.hidden = !bookmark;
   bookmarkTitle.value = bookmark?.title || '';
   bookmarkUrl.value = bookmark?.url || '';
   bookmarkNewGroup.value = '';
@@ -310,7 +310,7 @@ function openBookmarkDialog(groupId, bookmarkId = null, options = {}) {
 
   // A card-level Add is intentionally local. The global Add menu remains the
   // place for choosing any group (or creating a new one).
-  bookmarkGroupWrap.hidden = localAdd;
+  if (bookmarkGroupWrap) bookmarkGroupWrap.hidden = localAdd;
   if (localAdd) {
     bookmarkGroup.value = group.id;
     bookmarkNewGroupWrap.hidden = true;
@@ -367,7 +367,7 @@ bookmarkForm.addEventListener('submit', event => {
   render();
 });
 
-bookmarkDeleteBtn.addEventListener('click', () => {
+bookmarkDeleteBtn?.addEventListener('click', () => {
   if (!editBookmarkId) return;
   for (const group of state.groups) {
     if (group.bookmarks.some(bookmark => bookmark.id === editBookmarkId)) {
