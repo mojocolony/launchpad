@@ -1,6 +1,6 @@
 # Launchpad v0.3.0
 
-A lightweight TinyPad-style bookmark start page built with plain HTML, CSS and JavaScript.
+A lightweight bookmark start page built with plain HTML, CSS and JavaScript.
 
 ## New in v0.3.0
 
