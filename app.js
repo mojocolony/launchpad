@@ -903,13 +903,13 @@ function clearFolderDropIndicators() {
 
 function setupFolderDrag(folderNode) {
   const handle = folderNode.querySelector('.subfolder-drag-handle');
-  folderNode.draggable = editing && !searchInput.value.trim();
-  if (handle) handle.draggable = false;
+  // Match bookmark dragging: the six-dot handle is the draggable element,
+  // while the folder container receives the bubbled drag events.
+  folderNode.draggable = false;
+  if (handle) handle.draggable = editing && !searchInput.value.trim();
 
   folderNode.addEventListener('dragstart', event => {
-    if (!editing || searchInput.value.trim()) return event.preventDefault();
-    // Start folder dragging from the folder header, while leaving bookmark rows and Edit controls alone.
-    if (!event.target.closest('.subfolder-header') || event.target.closest('.subfolder-edit')) return event.preventDefault();
+    if (!editing || searchInput.value.trim() || !event.target.closest('.subfolder-drag-handle')) return event.preventDefault();
     event.stopPropagation();
     dragPayload = { type: 'folder', groupId: folderNode.dataset.groupId, folderId: folderNode.dataset.folderId };
     folderNode.classList.add('dragging');
