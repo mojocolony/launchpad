@@ -41,6 +41,7 @@ let dragPayload = null;
 let bookmarkDialogScopeGroupId = null;
 let folderDialogScopeGroupId = null;
 let pendingDragScrollState = null;
+let bookmarkletRequestActive = false;
 
 const board = document.querySelector('#board');
 const emptyState = document.querySelector('#emptyState');
@@ -89,6 +90,7 @@ applyFont(localStorage.getItem(FONT_KEY) || 'system');
 applyFontSize(localStorage.getItem(FONT_SIZE_KEY) || '17');
 setupBoardGroupDrop();
 render();
+handleBookmarkletRequest();
 
 function normalizeState(input) {
   const source = input && Array.isArray(input.groups) ? input : structuredClone(seed);
@@ -570,6 +572,25 @@ function updateNewGroupField() {
 
 bookmarkGroup.addEventListener('change', updateNewGroupField);
 
+function handleBookmarkletRequest() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('bookmarklet') !== '1') return;
+
+  const title = params.get('title') || '';
+  const url = params.get('url') || '';
+  if (!url) return;
+
+  bookmarkletRequestActive = true;
+
+  const cleanUrl = `${window.location.pathname}${window.location.hash || ''}`;
+  window.history.replaceState(null, '', cleanUrl);
+
+  openBookmarkDialog(null, null, {
+    prefillTitle: title,
+    prefillUrl: url
+  });
+}
+
 function openBookmarkDialog(groupId, bookmarkId = null, options = {}) {
   editBookmarkId = bookmarkId;
   const found = bookmarkId ? findBookmark(bookmarkId) : null;
@@ -585,8 +606,8 @@ function openBookmarkDialog(groupId, bookmarkId = null, options = {}) {
       : 'Add bookmark';
 
   bookmarkDeleteBtn.hidden = !bookmark;
-  bookmarkTitle.value = bookmark?.title || '';
-  bookmarkUrl.value = bookmark?.url || '';
+  bookmarkTitle.value = bookmark?.title || options.prefillTitle || '';
+  bookmarkUrl.value = bookmark?.url || options.prefillUrl || '';
   bookmarkNewGroup.value = '';
 
   const selectedDestination = found
@@ -598,8 +619,17 @@ function openBookmarkDialog(groupId, bookmarkId = null, options = {}) {
   populateDestinationSelect(selectedDestination, localAdd ? group.id : null, !localAdd);
   bookmarkGroupWrap.hidden = false;
   bookmarkDialog.showModal();
-  setTimeout(() => bookmarkTitle.focus(), 0);
+  setTimeout(() => {
+    if (options.prefillTitle || options.prefillUrl) bookmarkGroup.focus();
+    else bookmarkTitle.focus();
+  }, 0);
 }
+
+bookmarkDialog.addEventListener('close', () => {
+  if (!bookmarkletRequestActive) return;
+  bookmarkletRequestActive = false;
+  if (window.opener && !window.opener.closed) window.close();
+});
 
 bookmarkForm.addEventListener('submit', event => {
   if (event.submitter?.value !== 'save') return;
