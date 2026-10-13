@@ -939,3 +939,472 @@ main {
   .group-card.group-drop-before::before { top: -9px; }
   .group-card.group-drop-after::after { bottom: -9px; }
 }
+
+
+/* v0.5.0 — purpose-built smartphone interface. */
+.group-chips,
+.group-mobile-toggle,
+.bookmark-url-mobile,
+.bookmark-more-mobile,
+.mobile-more-wrap {
+  display: none;
+}
+
+.bookmark-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.action-sheet-dialog {
+  padding: 18px;
+}
+.bookmark-action-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 2px 2px 14px;
+}
+.bookmark-action-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.bookmark-action-copy strong,
+.bookmark-action-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bookmark-action-copy span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.action-sheet-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+.action-sheet-list button,
+.action-sheet-cancel,
+.mobile-more-menu button {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.action-sheet-cancel {
+  width: 100%;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--hover);
+  text-align: center;
+  font-weight: 650;
+}
+
+@media (max-width: 760px) {
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-rows: 44px 42px;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 10px;
+  }
+  .brand {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    font-size: 20px;
+  }
+  .brand-icon {
+    width: 21px;
+    height: 21px;
+    flex-basis: 21px;
+  }
+  .topbar-actions {
+    display: contents;
+  }
+  .topbar .search-wrap {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    height: 38px;
+    border-radius: 11px;
+  }
+  .topbar #appearanceBtn,
+  .topbar #themeBtn,
+  .topbar .desktop-control {
+    display: none !important;
+  }
+  .add-menu-wrap.edit-only {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex !important;
+    position: static;
+  }
+  #addBtn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--text);
+    color: var(--bg);
+    font-size: 0;
+  }
+  #addBtn::before {
+    content: '+';
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 300;
+    transform: translateY(-1px);
+  }
+  .mobile-more-wrap {
+    grid-column: 3;
+    grid-row: 1;
+    display: block;
+    position: static;
+  }
+  .mobile-more-btn {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    font-size: 17px;
+    letter-spacing: 1px;
+  }
+
+  .group-chips {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 9px 12px 3px;
+    background: var(--bg);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .group-chips::-webkit-scrollbar { display: none; }
+  .group-chip {
+    flex: 0 0 auto;
+    min-height: 31px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--hover);
+    color: var(--muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .group-chip.active {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  main {
+    padding: 10px 10px calc(76px + env(safe-area-inset-bottom));
+  }
+  .board {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .group-card {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    border-radius: 13px;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .group-header {
+    min-height: 52px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .group-card:not(.mobile-collapsed) .group-header {
+    border-radius: 13px 13px 0 0;
+  }
+  .group-title {
+    display: none;
+  }
+  .group-mobile-toggle {
+    width: 100%;
+    min-width: 0;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 13px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+  }
+  .group-mobile-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: var(--hover);
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .group-title-mobile {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .group-count-mobile {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .group-chevron-mobile {
+    width: 18px;
+    color: var(--muted);
+    font-size: 15px;
+    text-align: center;
+  }
+  .group-card.mobile-collapsed .card-scroll,
+  .group-card.mobile-collapsed .card-edit-footer {
+    display: none !important;
+  }
+  .card-scroll {
+    flex: none;
+    max-height: none;
+    overflow: visible;
+    padding: 5px 7px 8px;
+    border: 1px solid var(--border);
+    border-top: 0;
+    border-radius: 0 0 13px 13px;
+    background: var(--panel);
+  }
+  .card-items {
+    min-height: 0;
+    gap: 1px;
+  }
+
+  .bookmark-row {
+    min-height: 52px;
+    gap: 4px;
+    border-radius: 10px;
+  }
+  .bookmark-link {
+    min-height: 52px;
+    gap: 11px;
+    padding: 6px 7px;
+  }
+  .favicon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+  .bookmark-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+  }
+  .bookmark-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 650;
+  }
+  .bookmark-url-mobile {
+    display: block;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bookmark-more-mobile {
+    flex: 0 0 38px;
+    width: 38px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+  .bookmark-actions,
+  .bookmark-drag-handle {
+    display: none !important;
+  }
+
+  .subfolder {
+    padding-top: 2px;
+  }
+  .subfolder-header {
+    min-height: 44px;
+    margin: 2px 0;
+    border-radius: 10px;
+    background: var(--hover);
+  }
+  .subfolder-header:hover {
+    background: var(--hover);
+  }
+  .subfolder-toggle {
+    min-height: 44px;
+    padding: 7px 9px;
+    font-size: 14px;
+  }
+  .subfolder-content {
+    margin-left: 16px;
+    padding-left: 5px;
+  }
+  .subfolder-drag-handle {
+    display: none !important;
+  }
+
+  body.editing .group-actions {
+    display: flex;
+    padding-right: 7px;
+  }
+  body.editing .group-mobile-toggle {
+    min-width: 0;
+  }
+  body.editing .card-edit-footer {
+    display: grid;
+    padding: 0 7px 8px;
+    margin-top: 0;
+    border: 1px solid var(--border);
+    border-top: 0;
+    border-radius: 0 0 13px 13px;
+    background: var(--panel);
+  }
+  body.editing .group-card:not(.mobile-collapsed) .card-scroll {
+    border-radius: 0;
+    padding-bottom: 3px;
+  }
+
+  .action-menu,
+  .mobile-more-menu {
+    position: fixed;
+    z-index: 80;
+    top: auto;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    width: auto;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--panel);
+    box-shadow: 0 18px 60px rgba(0,0,0,.28);
+  }
+  .action-menu button,
+  .mobile-more-menu button {
+    min-height: 50px;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+  .action-menu button + button,
+  .mobile-more-menu button + button {
+    border-top: 1px solid var(--border);
+  }
+
+  .appearance-panel {
+    position: fixed;
+    z-index: 85;
+    top: auto;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    width: auto;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .dialog {
+    position: fixed;
+    inset: auto 0 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: min(82dvh, 720px);
+    margin: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-width: 1px 0 0;
+    border-radius: 22px 22px 0 0;
+    overflow: auto;
+  }
+  .dialog::backdrop {
+    background: rgba(0,0,0,.42);
+  }
+  .dialog form {
+    padding: 20px 18px 18px;
+  }
+  .dialog-head {
+    margin-bottom: 12px;
+  }
+  .dialog input,
+  .dialog select {
+    min-height: 46px;
+    font-size: 16px;
+  }
+  .dialog-actions {
+    gap: 10px;
+  }
+  .secondary-btn,
+  .primary-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  .action-sheet-dialog {
+    padding: 18px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+  .bookmark-action-head {
+    padding: 0 4px 14px;
+  }
+  .action-sheet-list {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .action-sheet-list button {
+    min-height: 52px;
+    font-size: 15px;
+  }
+  .action-sheet-list button:last-child {
+    border-bottom: 0;
+  }
+  .action-sheet-cancel {
+    min-height: 50px;
+    font-size: 15px;
+  }
+
+  .version-label {
+    display: none;
+  }
+}
