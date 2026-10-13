@@ -42,6 +42,9 @@ let bookmarkDialogScopeGroupId = null;
 let folderDialogScopeGroupId = null;
 let pendingDragScrollState = null;
 let bookmarkletRequestActive = false;
+const MOBILE_BREAKPOINT = 760;
+const mobileExpandedGroups = new Set();
+let actionBookmarkId = null;
 
 const board = document.querySelector('#board');
 const emptyState = document.querySelector('#emptyState');
@@ -84,6 +87,22 @@ const groupName = document.querySelector('#groupName');
 const groupTemplate = document.querySelector('#groupTemplate');
 const subfolderTemplate = document.querySelector('#subfolderTemplate');
 const bookmarkTemplate = document.querySelector('#bookmarkTemplate');
+const groupChips = document.querySelector('#groupChips');
+const mobileMoreBtn = document.querySelector('#mobileMoreBtn');
+const mobileMoreMenu = document.querySelector('#mobileMoreMenu');
+const mobileEditBtn = document.querySelector('#mobileEditBtn');
+const mobileAppearanceBtn = document.querySelector('#mobileAppearanceBtn');
+const mobileThemeBtn = document.querySelector('#mobileThemeBtn');
+const mobileImportBtn = document.querySelector('#mobileImportBtn');
+const bookmarkActionsDialog = document.querySelector('#bookmarkActionsDialog');
+const bookmarkActionFavicon = document.querySelector('#bookmarkActionFavicon');
+const bookmarkActionTitle = document.querySelector('#bookmarkActionTitle');
+const bookmarkActionUrl = document.querySelector('#bookmarkActionUrl');
+const bookmarkActionOpen = document.querySelector('#bookmarkActionOpen');
+const bookmarkActionEdit = document.querySelector('#bookmarkActionEdit');
+const bookmarkActionMove = document.querySelector('#bookmarkActionMove');
+const bookmarkActionCopy = document.querySelector('#bookmarkActionCopy');
+const bookmarkActionDelete = document.querySelector('#bookmarkActionDelete');
 
 applyTheme(localStorage.getItem(THEME_KEY) || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 applyFont(localStorage.getItem(FONT_KEY) || 'system');
@@ -260,6 +279,29 @@ function parseDestination(value) {
   return { newGroup: false, groupId: value, folderId: null };
 }
 
+function isMobileLayout() {
+  return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;
+}
+
+function mobileUrlLabel(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
+function openBookmarkActions(bookmarkId) {
+  const found = findBookmark(bookmarkId);
+  if (!found || !bookmarkActionsDialog) return;
+  actionBookmarkId = bookmarkId;
+  bookmarkActionTitle.textContent = found.bookmark.title;
+  bookmarkActionUrl.textContent = found.bookmark.url;
+  bookmarkActionFavicon.src = faviconFor(found.bookmark.url);
+  bookmarkActionsDialog.showModal();
+}
+
 function renderBookmarkRow(bookmark, groupId, folderId, list) {
   const row = bookmarkTemplate.content.firstElementChild.cloneNode(true);
   row.dataset.bookmarkId = bookmark.id;
@@ -275,6 +317,8 @@ function renderBookmarkRow(bookmark, groupId, folderId, list) {
     link.href = bookmark.url;
     const titleNode = link.querySelector('.bookmark-title');
     if (titleNode) titleNode.textContent = bookmark.title;
+    const mobileUrlNode = link.querySelector('.bookmark-url-mobile');
+    if (mobileUrlNode) mobileUrlNode.textContent = mobileUrlLabel(bookmark.url);
     const favicon = link.querySelector('.favicon');
     if (favicon) {
       favicon.src = faviconFor(bookmark.url);
@@ -285,6 +329,12 @@ function renderBookmarkRow(bookmark, groupId, folderId, list) {
   row.querySelector('.bookmark-edit')?.addEventListener('click', event => {
     event.preventDefault();
     openBookmarkDialog(groupId, bookmark.id);
+  });
+
+  row.querySelector('.bookmark-more-mobile')?.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    openBookmarkActions(bookmark.id);
   });
 
   setupBookmarkDrag(row);
@@ -335,6 +385,23 @@ function render({ preserveScroll = false, restoreScroll = null } = {}) {
     const groupNode = groupTemplate.content.firstElementChild.cloneNode(true);
     groupNode.dataset.groupId = group.id;
     groupNode.querySelector('.group-title').textContent = group.name;
+    groupNode.querySelector('.group-title-mobile').textContent = group.name;
+    groupNode.querySelector('.group-count-mobile').textContent = String(countGroupBookmarks(group));
+    const mobileExpanded = Boolean(q || editing || mobileExpandedGroups.has(group.id));
+    groupNode.classList.toggle('mobile-collapsed', !mobileExpanded);
+    const mobileToggle = groupNode.querySelector('.group-mobile-toggle');
+    const mobileChevron = groupNode.querySelector('.group-chevron-mobile');
+    mobileToggle?.setAttribute('aria-expanded', String(mobileExpanded));
+    if (mobileChevron) mobileChevron.textContent = mobileExpanded ? '⌃' : '⌄';
+    mobileToggle?.addEventListener('click', () => {
+      if (!isMobileLayout() || q || editing) return;
+      if (mobileExpandedGroups.has(group.id)) mobileExpandedGroups.delete(group.id);
+      else mobileExpandedGroups.add(group.id);
+      const expanded = mobileExpandedGroups.has(group.id);
+      groupNode.classList.toggle('mobile-collapsed', !expanded);
+      mobileToggle.setAttribute('aria-expanded', String(expanded));
+      if (mobileChevron) mobileChevron.textContent = expanded ? '⌃' : '⌄';
+    });
     groupNode.draggable = editing && !q;
 
     const itemList = groupNode.querySelector('.card-items');
@@ -441,6 +508,7 @@ function setEditing(value) {
   document.body.classList.toggle('editing', editing);
   editBtn.classList.toggle('active', editing);
   editBtn.textContent = editing ? 'Done' : 'Edit';
+  if (mobileEditBtn) mobileEditBtn.textContent = editing ? 'Done editing' : 'Edit layout';
   if (!editing) setAddMenu(false);
   render();
 }
@@ -488,6 +556,72 @@ fontSizeSelect.addEventListener('change', () => applyFontSize(fontSizeSelect.val
 document.addEventListener('click', () => {
   setAppearancePanel(false);
   setAddMenu(false);
+  setMobileMoreMenu(false);
+});
+
+function setMobileMoreMenu(open) {
+  if (!mobileMoreMenu || !mobileMoreBtn) return;
+  mobileMoreMenu.hidden = !open;
+  mobileMoreBtn.setAttribute('aria-expanded', String(open));
+}
+
+mobileMoreBtn?.addEventListener('click', event => {
+  event.stopPropagation();
+  setMobileMoreMenu(mobileMoreMenu.hidden);
+});
+mobileMoreMenu?.addEventListener('click', event => event.stopPropagation());
+mobileEditBtn?.addEventListener('click', () => {
+  setMobileMoreMenu(false);
+  setEditing(!editing);
+});
+mobileAppearanceBtn?.addEventListener('click', () => {
+  setMobileMoreMenu(false);
+  setAppearancePanel(true);
+});
+mobileThemeBtn?.addEventListener('click', () => {
+  setMobileMoreMenu(false);
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+});
+mobileImportBtn?.addEventListener('click', () => {
+  setMobileMoreMenu(false);
+  importFile.value = '';
+  importFile.click();
+});
+
+bookmarkActionOpen?.addEventListener('click', () => {
+  const found = actionBookmarkId ? findBookmark(actionBookmarkId) : null;
+  if (!found) return;
+  window.open(found.bookmark.url, '_blank', 'noopener');
+  bookmarkActionsDialog.close();
+});
+bookmarkActionEdit?.addEventListener('click', () => {
+  const found = actionBookmarkId ? findBookmark(actionBookmarkId) : null;
+  if (!found) return;
+  bookmarkActionsDialog.close();
+  openBookmarkDialog(found.group.id, found.bookmark.id);
+});
+bookmarkActionMove?.addEventListener('click', () => {
+  const found = actionBookmarkId ? findBookmark(actionBookmarkId) : null;
+  if (!found) return;
+  bookmarkActionsDialog.close();
+  openBookmarkDialog(found.group.id, found.bookmark.id, { focusLocation: true });
+});
+bookmarkActionCopy?.addEventListener('click', async () => {
+  const found = actionBookmarkId ? findBookmark(actionBookmarkId) : null;
+  if (!found) return;
+  try {
+    await navigator.clipboard.writeText(found.bookmark.url);
+    showToast('URL copied.');
+  } catch {
+    showToast('Could not copy the URL.');
+  }
+  bookmarkActionsDialog.close();
+});
+bookmarkActionDelete?.addEventListener('click', () => {
+  const id = actionBookmarkId;
+  bookmarkActionsDialog.close();
+  if (id) deleteBookmark(id);
 });
 
 function applyTheme(theme) {
@@ -620,7 +754,8 @@ function openBookmarkDialog(groupId, bookmarkId = null, options = {}) {
   bookmarkGroupWrap.hidden = false;
   bookmarkDialog.showModal();
   setTimeout(() => {
-    if (options.prefillTitle || options.prefillUrl) bookmarkGroup.focus();
+    if (options.focusLocation) bookmarkGroup.focus();
+    else if (options.prefillTitle || options.prefillUrl) bookmarkGroup.focus();
     else bookmarkTitle.focus();
   }, 0);
 }
